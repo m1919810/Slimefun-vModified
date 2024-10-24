@@ -220,8 +220,8 @@ public class BlockDataController extends ADataController {
             return getBlockDataFromCache(l);
         }
 
-        var chunk = l.getChunk();
-        var chunkData = getChunkDataCache(chunk, false);
+        //var chunk = l.getChunk();
+        var chunkData = getChunkDataCache(l, false);
         var lKey = LocationUtils.getLocKey(l);
         if (chunkData != null) {
             var re = chunkData.getBlockCacheInternal(lKey);
@@ -238,7 +238,7 @@ public class BlockDataController extends ADataController {
         var re =
                 result.isEmpty() ? null : new SlimefunBlockData(l, result.get(0).get(FieldKey.SLIMEFUN_ID));
         if (re != null) {
-            chunkData = getChunkDataCache(chunk, true);
+            chunkData = getChunkDataCache(l, true);
             chunkData.addBlockCacheInternal(re, false);
             re = chunkData.getBlockCacheInternal(lKey);
         }
@@ -262,7 +262,7 @@ public class BlockDataController extends ADataController {
      * @return {@link SlimefunBlockData}
      */
     public SlimefunBlockData getBlockDataFromCache(Location l) {
-        return getBlockDataFromCache(LocationUtils.getChunkKey(l.getChunk()), LocationUtils.getLocKey(l));
+        return getBlockDataFromCache(LocationUtils.getChunkKey(l), LocationUtils.getLocKey(l));
     }
 
     /**
@@ -744,6 +744,14 @@ public class BlockDataController extends ADataController {
                     return re;
                 })
                 : loadedChunk.get(LocationUtils.getChunkKey(chunk));
+    }
+    private SlimefunChunkData getChunkDataCache(Location loc, boolean createOnNotExists) {
+        //我直接tm甩锅到上面
+        //有啥事都别怪我，我只是加了一条检测 并不会触发什么东西
+        return loadedChunk.getOrDefault(LocationUtils.getChunkKey(loc),
+            //这里不要检测createOnNotExist 容易出事
+            getChunkDataCache(loc.getChunk(),createOnNotExists));
+
     }
 
     private void deleteChunkAndBlockDataDirectly(String cKey) {

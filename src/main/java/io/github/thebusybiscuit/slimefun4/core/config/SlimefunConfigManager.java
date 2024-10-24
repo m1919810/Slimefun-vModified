@@ -116,7 +116,9 @@ public class SlimefunConfigManager {
             useMoneyUnlock = pluginConfig.getBoolean("researches.use-money-unlock");
             showVanillaRecipes = pluginConfig.getBoolean("guide.show-vanilla-recipes");
             showHiddenItemGroupsInSearch = pluginConfig.getBoolean("guide.show-hidden-item-groups-in-search");
-            autoUpdate = pluginConfig.getBoolean("options.auto-update");
+            //去除正常更新
+            //autoUpdate = pluginConfig.getBoolean("options.auto-update");
+            autoUpdate=false;
             bypassEnvironmentCheck = pluginConfig.getBoolean("options.bypass-environment-check");
 
             researchesConfig.setDefaultValue("researches.currency-cost-convert-rate", 25.0);

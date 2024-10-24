@@ -14,6 +14,9 @@ public class LocationUtils {
     public static String getChunkKey(Chunk chunk) {
         return chunk.getWorld().getName() + ";" + chunk.getX() + ":" + chunk.getZ();
     }
+    public static String getChunkKey(Location loc) {
+        return loc.getWorld().getName() + ";" + (loc.getBlockX()>>4) + ":" + (loc.getBlockZ()>>4);
+    }
 
     public static Location toLocation(String lKey) {
         var strArr = lKey.split(";");

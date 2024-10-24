@@ -4,8 +4,6 @@ import java.io.File;
 import java.lang.reflect.Method;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.guizhanss.guizhanlib.updater.GuizhanBuildsUpdater;
-import net.guizhanss.guizhanlib.updater.UpdaterConfig;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -49,15 +47,15 @@ public class AutoUpdateTask implements Runnable {
             updaterStart.invoke(null, plugin, file, GITHUB_USER, GITHUB_REPO, branch);
         } catch (Exception ignored) {
             // use updater in lib
-            GuizhanBuildsUpdater.start(
-                    plugin,
-                    file,
-                    GITHUB_USER,
-                    GITHUB_REPO,
-                    branch,
-                    UpdaterConfig.builder()
-                            .baseUrl("https://builds.guizhanss.cn/")
-                            .build());
+//            GuizhanBuildsUpdater.start(
+//                    plugin,
+//                    file,
+//                    GITHUB_USER,
+//                    GITHUB_REPO,
+//                    branch,
+//                    UpdaterConfig.builder()
+//                            .baseUrl("https://builds.guizhanss.cn/")
+//                            .build());
         }
     }
 
