@@ -748,10 +748,13 @@ public class BlockDataController extends ADataController {
     private SlimefunChunkData getChunkDataCache(Location loc, boolean createOnNotExists) {
         //我直接tm甩锅到上面
         //有啥事都别怪我，我只是加了一条检测 并不会触发什么东西
-        return loadedChunk.getOrDefault(LocationUtils.getChunkKey(loc),
+        var a= loadedChunk.get(LocationUtils.getChunkKey(loc));
+        if(a!=null){
+            return a;
+        }else{
             //这里不要检测createOnNotExist 容易出事
-            getChunkDataCache(loc.getChunk(),createOnNotExists));
-
+            return getChunkDataCache(loc.getChunk(),createOnNotExists);
+        }
     }
 
     private void deleteChunkAndBlockDataDirectly(String cKey) {
