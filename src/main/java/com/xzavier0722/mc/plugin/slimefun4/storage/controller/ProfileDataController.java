@@ -348,7 +348,6 @@ public class ProfileDataController extends ADataController {
                 if (invalidingBackpackTasks.remove(pUuid) != this) {
                     return;
                 }
-
                 if (Bukkit.getOfflinePlayer(UUID.fromString(pUuid)).isOnline()) {
                     return;
                 }

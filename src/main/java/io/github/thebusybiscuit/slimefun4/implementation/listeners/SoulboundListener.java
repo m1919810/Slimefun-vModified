@@ -45,13 +45,14 @@ public class SoulboundListener implements Listener {
         }
 
         // There shouldn't even be any items in there, but let's be extra safe!
-        Map<Integer, ItemStack> existingItems = soulbound.get(p.getUniqueId());
+//        Map<Integer, ItemStack> existingItems = soulbound.get(p.getUniqueId());
+//
+//        if (existingItems == null) {
+//        } else {
+//            existingItems.putAll(items);
+//        }
+        soulbound.put(p.getUniqueId(), items);
 
-        if (existingItems == null) {
-            soulbound.put(p.getUniqueId(), items);
-        } else {
-            existingItems.putAll(items);
-        }
 
         // Remove soulbound items from our drops
         e.getDrops().removeIf(itemStack -> SlimefunUtils.isSoulbound(itemStack, p.getWorld()));

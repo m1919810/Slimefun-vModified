@@ -4,14 +4,19 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import io.github.thebusybiscuit.slimefun4.core.attributes.DistinctiveItem;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import me.matl114.matlib.Utils.CraftUtils;
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -29,7 +34,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @see RepairedSpawner
  *
  */
-public abstract class AbstractMonsterSpawner extends SlimefunItem {
+public abstract class AbstractMonsterSpawner extends SlimefunItem implements DistinctiveItem {
 
     @ParametersAreNonnullByDefault
     AbstractMonsterSpawner(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -65,6 +70,13 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
                 return Optional.of(type);
             }
         }
+        if(meta instanceof BlockStateMeta blockStateMeta){
+            if(blockStateMeta.hasBlockState()&& blockStateMeta.getBlockState() instanceof CreatureSpawner spawner){
+                EntityType type=spawner.getSpawnedType();
+                if(type!=null)
+                    return Optional.of(type);
+            }
+        }
 
         return Optional.empty();
     }
@@ -80,30 +92,31 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
      * @return An {@link ItemStack} for this {@link SlimefunItem} holding that {@link EntityType}
      */
     @Nonnull
-    public ItemStack getItemForEntityType(@Nonnull EntityType type) {
-        Validate.notNull(type, "The EntityType cannot be null");
+    public ItemStack getItemForEntityType(@Nullable EntityType type) {
+        //Validate.notNull(type, "The EntityType cannot be null");
 
         ItemStack item = getItem().clone();
         ItemMeta meta = item.getItemMeta();
+        if(type!=null&&type.isSpawnable()) {
 
-        // Fixes #2583 - Proper NBT handling of Spawners
-        if (meta instanceof BlockStateMeta stateMeta) {
-            BlockState state = stateMeta.getBlockState();
+            // Fixes #2583 - Proper NBT handling of Spawners
+            if (meta instanceof BlockStateMeta stateMeta) {
+                BlockState state = stateMeta.getBlockState();
 
-            if (state instanceof CreatureSpawner spawner) {
-                spawner.setSpawnedType(type);
+                if (state instanceof CreatureSpawner spawner) {
+                    spawner.setSpawnedType(type);
+                }
+
+                stateMeta.setBlockState(state);
             }
-
-            stateMeta.setBlockState(state);
         }
-
         // Setting the lore to indicate the Type visually
         List<String> lore = meta.getLore();
 
         for (int i = 0; i < lore.size(); i++) {
             String currentLine = lore.get(i);
             if (currentLine.contains("<Type>") || currentLine.contains("<类型>")) {
-                String typeName = ChatUtils.humanize(type.name());
+                String typeName = type==null?"空" :ChatUtils.humanize(type.name());
                 lore.set(i, currentLine.replace("<Type>", typeName).replace("<类型>", typeName));
                 break;
             }
@@ -111,7 +124,17 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
 
         meta.setLore(lore);
         item.setItemMeta(meta);
-
         return item;
+    }
+    public boolean canStack(@Nonnull ItemMeta itemMetaOne, @Nonnull ItemMeta itemMetaTwo){
+        if(itemMetaOne instanceof BlockStateMeta stateMeta1 && itemMetaTwo instanceof BlockStateMeta stateMeta2){
+            boolean hasBlock1=stateMeta1.hasBlockState();
+            boolean hasBlock2=stateMeta2.hasBlockState();
+            if(hasBlock1&&hasBlock2){
+                return CraftUtils.matchBlockStateMetaField(stateMeta1,stateMeta2);
+            }
+            return hasBlock1==hasBlock2;
+        }
+        return false;
     }
 }

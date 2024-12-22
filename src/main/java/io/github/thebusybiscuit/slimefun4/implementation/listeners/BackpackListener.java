@@ -10,9 +10,12 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -47,7 +50,7 @@ public class BackpackListener implements Listener {
 
     private final Map<UUID, ItemStack> backpacks = new HashMap<>();
     private final Map<UUID, List<Pair<ItemStack, Integer>>> invSnapshot = new HashMap<>();
-
+    private final Set<UUID> openingPlayer=new HashSet<>();
     public void register(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -183,18 +186,18 @@ public class BackpackListener implements Listener {
         // Check if someone else is currently viewing this backpack
         if (!backpacks.containsValue(item)) {
             SoundEffect.BACKPACK_OPEN_SOUND.playAt(p.getLocation(), SoundCategory.PLAYERS);
-
             PlayerBackpack.getAsync(
                     item,
                     backpack -> {
+                        backpack.open(p);
                         backpacks.put(p.getUniqueId(), item);
                         invSnapshot.put(
                                 backpack.getUniqueId(),
                                 InvStorageUtils.getInvSnapshot(
                                         backpack.getInventory().getContents()));
-                        backpack.open(p);
                     },
                     true);
+
         } else {
             Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
         }

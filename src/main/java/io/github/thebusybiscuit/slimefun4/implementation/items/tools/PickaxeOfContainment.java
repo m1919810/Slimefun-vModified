@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSpawnReason;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ToolUseHandler;
@@ -14,6 +15,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.RepairedSp
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -48,26 +50,31 @@ public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
 
             if (b.getType() == Material.SPAWNER) {
                 ItemStack spawner = breakSpawner(b);
-                SlimefunUtils.spawnItem(
-                        b.getLocation(), spawner, ItemSpawnReason.BROKEN_SPAWNER_DROP, true, e.getPlayer());
+                if(spawner!=null){
+                    SlimefunUtils.spawnItem(
+                            b.getLocation(), spawner, ItemSpawnReason.BROKEN_SPAWNER_DROP, true, e.getPlayer());
 
-                e.setExpToDrop(0);
-                e.setDropItems(false);
+                    e.setExpToDrop(0);
+                    e.setDropItems(false);
+                }
             }
         };
     }
 
-    private @Nonnull ItemStack breakSpawner(@Nonnull Block b) {
+    private @Nullable ItemStack breakSpawner(@Nonnull Block b) {
         AbstractMonsterSpawner spawner;
 
         /*
         If the spawner's BlockStorage has BlockInfo, then it's not a vanilla spawner
         and should not give a broken spawner but a repaired one instead.
         */
-        if (StorageCacheUtils.hasBlock(b.getLocation())) {
+        SlimefunItem item=StorageCacheUtils.getSfItem(b.getLocation());
+        if (item instanceof RepairedSpawner) {
             spawner = (AbstractMonsterSpawner) SlimefunItems.REPAIRED_SPAWNER.getItem();
-        } else {
+        } else if (item ==null) {
             spawner = (AbstractMonsterSpawner) SlimefunItems.BROKEN_SPAWNER.getItem();
+        }else{
+            return null;
         }
 
         BlockState state = PaperLib.getBlockState(b, false).getState();

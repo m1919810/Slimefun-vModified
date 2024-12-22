@@ -143,6 +143,7 @@
 
                 <configuration>
                     <!-- Relocate these to avoid clashes and conflicts -->
+                    <minimizeJar>true</minimizeJar>
                     <relocations>
                         <relocation>
                             <pattern>io.github.bakedlibs.dough</pattern>
@@ -163,6 +164,10 @@
                         <relocation>
                             <pattern>net.guizhanss.guizhanlib</pattern>
                             <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.guizhanlib</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>me.matl114.matlib</pattern>
+                            <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.matlib</shadedPattern>
                         </relocation>
                     </relocations>
 
@@ -276,6 +281,12 @@
             <groupId>io.papermc</groupId>
             <artifactId>paperlib</artifactId>
             <version>1.0.8</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.m1919810</groupId>
+            <artifactId>matlib</artifactId>
+            <version>d0b00fe</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -122,6 +122,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import me.matl114.matlib.core.AddonInitialization;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
 import net.guizhanss.slimefun4.updater.AutoUpdateTask;
 import org.apache.commons.lang.Validate;
@@ -213,7 +215,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final GrapplingHookListener grapplingHookListener = new GrapplingHookListener();
     private final BackpackListener backpackListener = new BackpackListener();
     private final SlimefunBowListener bowListener = new SlimefunBowListener();
-
+    private AddonInitialization addonInitialization;
     /**
      * Our default constructor for {@link Slimefun}.
      */
@@ -261,6 +263,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         } else {
             // The Environment has been validated.
             onPluginStart();
+            addonInitialization= new AddonInitialization(this,"SLIMEFUN").onEnable();
         }
     }
 
@@ -467,7 +470,9 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         if (instance() == null || minecraftVersion == MinecraftVersion.UNIT_TEST) {
             return;
         }
-
+        if(this.addonInitialization!=null){
+            this.addonInitialization.onDisable();
+        }
         SlimefunExtended.shutdown();
         getSQLProfiler().stop();
 

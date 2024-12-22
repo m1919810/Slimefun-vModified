@@ -15,6 +15,7 @@
 *.iml
 *.bak
 .DS_Store
+*.todo
 
 dependency-reduced-pom.xml
 /src/test/implementation/items/autocrafters/TestAutoCrafter.java
