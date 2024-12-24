@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.core.services.profiler;
 
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.inspectors.PlayerPerformanceInspector;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import lombok.Setter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -27,6 +30,11 @@ class PerformanceSummary {
     private final SlimefunProfiler profiler;
     private final PerformanceRating rating;
     private final long totalElapsedTime;
+    public PerformanceSummary setTotalRunTime(final long totalRunTime) {
+        this.totalRunTime=totalRunTime;
+        return this;
+    }
+    private long totalRunTime;
     private final int totalTickedBlocks;
     private final float percentage;
     private final int tickRate;
@@ -43,16 +51,24 @@ class PerformanceSummary {
         this.totalTickedBlocks = totalTickedBlocks;
         this.tickRate = profiler.getTickRate();
 
+
         chunks = profiler.getByChunk();
         plugins = profiler.getByPlugin();
         items = profiler.getByItem();
     }
-
+    private boolean doSendChunkSummary= Slimefun.getCfg().getOrSetDefault("summarize-chunk-timings",true);
     public void send(@Nonnull PerformanceInspector sender) {
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN + "===== Slimefun Lag Profiler =====");
+        if(totalRunTime!=0){
+            sender.sendMessage(
+                ChatColor.GOLD + "Async Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime));
+        }else{
+            sender.sendMessage(
+                ChatColor.GOLD + "Async ticker not enabled!" );
+        }
         sender.sendMessage(
-                ChatColor.GOLD + "Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalElapsedTime));
+                ChatColor.GOLD + "Total Machine time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalElapsedTime));
         sender.sendMessage(ChatColor.GOLD
                 + "Running every: "
                 + ChatColor.YELLOW
@@ -80,13 +96,14 @@ class PerformanceSummary {
                 return String.format(message, time + " | avg: " + average);
             }
         });
+        if(doSendChunkSummary){
+            summarizeTimings(chunks.size(), "chunk", sender, chunks, entry -> {
+                int count = profiler.getBlocksInChunk(entry.getKey());
+                String time = NumberUtils.getAsMillis(entry.getValue());
 
-        summarizeTimings(chunks.size(), "chunk", sender, chunks, entry -> {
-            int count = profiler.getBlocksInChunk(entry.getKey());
-            String time = NumberUtils.getAsMillis(entry.getValue());
-
-            return entry.getKey() + " - " + count + " block" + (count != 1 ? 's' : "") + " (" + time + ")";
-        });
+                return entry.getKey() + " - " + count + " block" + (count != 1 ? 's' : "") + " (" + time + ")";
+            });
+        }
 
         summarizeTimings(plugins.size(), "plugin", sender, plugins, entry -> {
             int count = profiler.getBlocksFromPlugin(entry.getKey());

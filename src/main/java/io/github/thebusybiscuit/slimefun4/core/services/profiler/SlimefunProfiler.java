@@ -72,7 +72,8 @@ public class SlimefunProfiler {
      * This boolean marks whether we are currently profiling or not.
      */
     private volatile boolean isProfiling = false;
-
+    private volatile long startTime;
+    private long totalNsRunTime;
     /**
      * This {@link AtomicInteger} holds the amount of blocks that still need to be
      * profiled.
@@ -105,6 +106,7 @@ public class SlimefunProfiler {
         isProfiling = true;
         queued.set(0);
         timings.clear();
+        startTime=System.nanoTime();
     }
 
     /**
@@ -181,14 +183,14 @@ public class SlimefunProfiler {
             // Slimefun has been disabled
             return;
         }
-
+        totalNsRunTime = (System.nanoTime() - startTime);
         executor.execute(this::finishReport);
     }
 
     private void finishReport() {
         // We will only wait for a maximum of this many 1ms sleeps
         int iterations = 4000;
-
+        long totalRuntime=totalNsRunTime;
         // Wait for all timing results to come in
         while (!isProfiling && queued.get() > 0) {
             try {
@@ -237,7 +239,7 @@ public class SlimefunProfiler {
         ticksPassed.incrementAndGet();
 
         if (!requests.isEmpty()) {
-            PerformanceSummary summary = new PerformanceSummary(this, totalElapsedTime, timings.size());
+            PerformanceSummary summary = new PerformanceSummary(this, totalElapsedTime, timings.size()).setTotalRunTime(totalRuntime);
             Iterator<PerformanceInspector> iterator = requests.iterator();
 
             while (iterator.hasNext()) {
@@ -342,7 +344,8 @@ public class SlimefunProfiler {
     }
 
     protected float getPercentageOfTick() {
-        float millis = totalElapsedTime / 1000000.0F;
+        //float millis = totalElapsedTime / 1000000.0F;
+        float millis = this.totalNsRunTime / 1000000.0F;
         float fraction = (millis * 100.0F) / MAX_TICK_DURATION;
 
         return Math.round((fraction * 100.0F) / 100.0F);

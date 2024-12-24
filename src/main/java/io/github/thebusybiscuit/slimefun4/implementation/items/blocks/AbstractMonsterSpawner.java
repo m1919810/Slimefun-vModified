@@ -12,8 +12,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import me.matl114.matlib.Utils.CraftUtils;
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
@@ -126,12 +124,13 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
         item.setItemMeta(meta);
         return item;
     }
+    //todo add method to solve blockState compare
     public boolean canStack(@Nonnull ItemMeta itemMetaOne, @Nonnull ItemMeta itemMetaTwo){
         if(itemMetaOne instanceof BlockStateMeta stateMeta1 && itemMetaTwo instanceof BlockStateMeta stateMeta2){
             boolean hasBlock1=stateMeta1.hasBlockState();
             boolean hasBlock2=stateMeta2.hasBlockState();
             if(hasBlock1&&hasBlock2){
-                return CraftUtils.matchBlockStateMetaField(stateMeta1,stateMeta2);
+                return itemMetaOne.equals(itemMetaTwo);
             }
             return hasBlock1==hasBlock2;
         }

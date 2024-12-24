@@ -100,6 +100,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.resources.GEOResourcesS
 import io.github.thebusybiscuit.slimefun4.implementation.setup.PostSetup;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.ResearchSetup;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.SlimefunItemSetup;
+import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncTickerTask;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.SlimefunStartupTask;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.TickerTask;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.armor.RadiationTask;
@@ -123,7 +124,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import me.matl114.matlib.core.AddonInitialization;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
 import net.guizhanss.slimefun4.updater.AutoUpdateTask;
 import org.apache.commons.lang.Validate;
@@ -176,7 +176,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final SlimefunDatabaseManager databaseManager = new SlimefunDatabaseManager(this);
     private final SlimefunRegistry registry = new SlimefunRegistry();
     private final SlimefunCommand command = new SlimefunCommand(this);
-    private final TickerTask ticker = new TickerTask();
+    private final TickerTask ticker = new AsyncTickerTask();// new TickerTask();
     private PlayerChatCatcher chatCatcher;
 
     // Services - Systems that fulfill certain tasks, treat them as a black box
@@ -215,7 +215,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final GrapplingHookListener grapplingHookListener = new GrapplingHookListener();
     private final BackpackListener backpackListener = new BackpackListener();
     private final SlimefunBowListener bowListener = new SlimefunBowListener();
-    private AddonInitialization addonInitialization;
     /**
      * Our default constructor for {@link Slimefun}.
      */
@@ -263,7 +262,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         } else {
             // The Environment has been validated.
             onPluginStart();
-            addonInitialization= new AddonInitialization(this,"SLIMEFUN").onEnable();
         }
     }
 
@@ -469,9 +467,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Slimefun never loaded successfully, so we don't even bother doing stuff here
         if (instance() == null || minecraftVersion == MinecraftVersion.UNIT_TEST) {
             return;
-        }
-        if(this.addonInitialization!=null){
-            this.addonInitialization.onDisable();
         }
         SlimefunExtended.shutdown();
         getSQLProfiler().stop();

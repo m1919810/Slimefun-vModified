@@ -37,19 +37,19 @@ public class TickerTask implements Runnable {
      * This Map holds all currently actively ticking locations.
      * The value of this map (Set entries) MUST be thread-safe and mutable.
      */
-    private final Map<ChunkPosition, Set<Location>> tickingLocations = new ConcurrentHashMap<>();
+    protected final Map<ChunkPosition, Set<Location>> tickingLocations = new ConcurrentHashMap<>();
 
     /**
      * This Map tracks how many bugs have occurred in a given Location .
      * If too many bugs happen, we delete that Location.
      */
-    private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
+    protected final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
 
-    private int tickRate;
-    private boolean halted = false;
-    private boolean running = false;
+    protected int tickRate;
+    protected boolean halted = false;
+    protected boolean running = false;
 
-    private volatile boolean paused = false;
+    protected volatile boolean paused = false;
 
     /**
      * This method starts the {@link TickerTask} on an asynchronous schedule.
@@ -67,7 +67,7 @@ public class TickerTask implements Runnable {
     /**
      * This method resets this {@link TickerTask} to run again.
      */
-    private void reset() {
+    protected void reset() {
         running = false;
     }
 
@@ -176,7 +176,7 @@ public class TickerTask implements Runnable {
     }
 
     @ParametersAreNonnullByDefault
-    private void tickBlock(Location l, Block b, SlimefunItem item, SlimefunBlockData data, long timestamp) {
+    protected void tickBlock(Location l, Block b, SlimefunItem item, SlimefunBlockData data, long timestamp) {
         try {
             item.getBlockTicker().tick(b, item, data);
         } catch (Exception | LinkageError x) {
@@ -187,7 +187,7 @@ public class TickerTask implements Runnable {
     }
 
     @ParametersAreNonnullByDefault
-    private void reportErrors(Location l, SlimefunItem item, Throwable x) {
+    protected void reportErrors(Location l, SlimefunItem item, Throwable x) {
         BlockPosition position = new BlockPosition(l);
         int errors = bugs.getOrDefault(position, 0) + 1;
 
