@@ -143,7 +143,6 @@
 
                 <configuration>
                     <!-- Relocate these to avoid clashes and conflicts -->
-                    <minimizeJar>true</minimizeJar>
                     <relocations>
                         <relocation>
                             <pattern>io.github.bakedlibs.dough</pattern>
