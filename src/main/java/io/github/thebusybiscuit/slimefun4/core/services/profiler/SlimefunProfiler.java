@@ -178,12 +178,11 @@ public class SlimefunProfiler {
      */
     public void stop() {
         isProfiling = false;
-
+        totalNsRunTime = (System.nanoTime() - startTime);
         if (Slimefun.instance() == null || !Slimefun.instance().isEnabled()) {
             // Slimefun has been disabled
             return;
         }
-        totalNsRunTime = (System.nanoTime() - startTime);
         executor.execute(this::finishReport);
     }
 

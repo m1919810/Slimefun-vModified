@@ -13,12 +13,14 @@ import org.bukkit.block.Block;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class AsyncTickerTask extends TickerTask{
@@ -34,12 +36,13 @@ public class AsyncTickerTask extends TickerTask{
             }
             running = true;
             Slimefun.getProfiler().start();
-            Set<BlockTicker> tickers = ConcurrentHashMap.<BlockTicker>newKeySet();
-
+            //each ticker map to a single task chain ,in case of async invoke which led to inner ConcurrentModificationException
+            HashMap<BlockTicker,CompletableFuture<Void>> tickers = new HashMap<>();
+            //sync tickers are rare
+            HashSet<BlockTicker> syncTickers = new HashSet<>();
             // Run our ticker code
             if (!halted) {
                 Set<ChunkPosition> loc;
-                List<CompletableFuture<Void>> futures=new ArrayList<>();
                 synchronized (tickingLocations) {
                     loc = new HashSet<>(tickingLocations.keySet());
                 }
@@ -49,17 +52,22 @@ public class AsyncTickerTask extends TickerTask{
                     synchronized (tickingLocations) {
                         locs=new HashSet<>(tickingLocations.get(entry));
                     }
-                    var tickThread=tickChunkAsync(entry,tickers,locs);
-                    if(tickThread!=null) {
-                        futures.add(tickThread);
-                    }
-                   // tickChunk(entry, tickers, new HashSet<>());
+                    tickChunkAsync(entry,tickers,syncTickers,locs);
+
                 }
-                CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+                CompletableFuture.allOf(tickers.values().toArray(CompletableFuture[]::new)).orTimeout(10, TimeUnit.SECONDS).exceptionally(ex -> {
+                    // 超时或者其他异常的处理逻辑
+                    Slimefun.logger()
+                        .log(Level.SEVERE,()->{return "Timeout or error occurred in AsyncTickTask: " + ex.getMessage();});
+                    return null;
+                }).join();
             }
 
             // Start a new tick cycle for every BlockTicker
-            for (BlockTicker ticker : tickers) {
+            for (BlockTicker ticker : tickers.keySet()) {
+                ticker.startNewTick();
+            }
+            for (BlockTicker ticker : syncTickers) {
                 ticker.startNewTick();
             }
             Slimefun.getProfiler().stop();
@@ -75,44 +83,39 @@ public class AsyncTickerTask extends TickerTask{
             reset();
         }
     }
-    private CompletableFuture<Void> tickChunkAsync(ChunkPosition chunk,Set<BlockTicker> tickers,HashSet<Location> locations){
+    private void tickChunkAsync(ChunkPosition chunk,HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncTickers,HashSet<Location> locations){
         try {
             // Only continue if the Chunk is actually loaded
 
             if (chunk.isLoaded()) {
-                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {});
                 for (Location l : locations) {
-                    future=tickLocationAsync(tickers, l,future);
+                    tickLocationAsync(tickers,syncTickers, l);
                 }
-                return future;
             }
 
         } catch (ArrayIndexOutOfBoundsException | NumberFormatException x) {
             Slimefun.logger()
                 .log(Level.SEVERE, x, () -> "An Exception has occurred while trying to resolve Chunk: " + chunk);
         }
-        return null;
     }
-    private CompletableFuture<Void> tickLocationAsync(@Nonnull Set<BlockTicker> tickers, @Nonnull Location l,CompletableFuture<Void> future) {
+    private void tickLocationAsync(@Nonnull HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncticker, @Nonnull Location l) {
         var blockData = StorageCacheUtils.getBlock(l);
         if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
-            return future;
+            return ;
         }
         SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
 
         if (item != null && item.getBlockTicker() != null) {
             if (item.isDisabledIn(l.getWorld())) {
-                return future;
+                return ;
             }
-            //future=future.thenRun(()->{
             try {
                 BlockTicker ticker = item.getBlockTicker();
-                tickers.add(ticker);
+                ticker.update();
                 if (ticker.isSynchronized()) {
+                    syncticker.add(ticker);
                     Slimefun.getProfiler().scheduleEntries(1);
-                    synchronized (ticker){
-                        ticker.update();
-                    }
+
                     /**
                      * We are inserting a new timestamp because synchronized actions
                      * are always ran with a 50ms delay (1 game tick)
@@ -125,23 +128,25 @@ public class AsyncTickerTask extends TickerTask{
                         tickBlock(l, b, item, blockData, System.nanoTime());
                     });
                 } else {
-                    future.thenRun(()->{
-                        try{
+                    tickers.compute(ticker,(bt,future)->{
+                        Runnable tickTask=()->{
                             long timestamp = Slimefun.getProfiler().newEntry();
-                            Block b = l.getBlock();
-                            synchronized (ticker){
-                                ticker.update();
-                                tickBlock(l, b, item, blockData, timestamp);
+                            try {
+                                Block b = l.getBlock();
+                                ticker.tick(b, item, blockData);
+                            } catch (Throwable x) {
+                                reportErrors(l, item, x);
+                            } finally {
+                                Slimefun.getProfiler().closeEntry(l, item, timestamp);
                             }
-
-                        }catch(Throwable ignored){}
+                        };
+                        return future==null?CompletableFuture.runAsync(tickTask):future.thenRun(tickTask);
                     });
                 }
             } catch (Throwable x) {
                 reportErrors(l, item, x);
             }
         }
-        return future;
     }
 
 
