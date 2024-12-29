@@ -24,8 +24,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class AsyncTickerTask extends TickerTask{
+    boolean useAsync=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
+    public AsyncTickerTask(){
+        Slimefun.logger().log(Level.INFO,"Setting up tick task");
+        if(useAsync){
+            Slimefun.logger().log(Level.INFO,"Async Ticker enabled");
+        }else {
+            Slimefun.logger().log(Level.INFO,"Async Ticker disabled");
+        }
+    }
     @Override
     public void run() {
+        if(!useAsync){
+            super.run();
+            return;
+        }
         if (paused) {
             return;
         }
@@ -140,7 +153,7 @@ public class AsyncTickerTask extends TickerTask{
                                 Slimefun.getProfiler().closeEntry(l, item, timestamp);
                             }
                         };
-                        return future==null?CompletableFuture.runAsync(tickTask):future.thenRun(tickTask);
+                        return future==null?CompletableFuture.runAsync(tickTask).exceptionally((ignored)->null):future.thenRunAsync(tickTask).exceptionally((ignored)->null);
                     });
                 }
             } catch (Throwable x) {

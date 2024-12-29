@@ -56,16 +56,17 @@ class PerformanceSummary {
         plugins = profiler.getByPlugin();
         items = profiler.getByItem();
     }
-    private boolean doSendChunkSummary= Slimefun.getCfg().getOrSetDefault("summarize-chunk-timings",true);
+    private static boolean doSendChunkSummary= Slimefun.getCfg().getOrSetDefault("URID.summarize-chunk-timings",true);
+    private static boolean enableAsyncTicker=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
     public void send(@Nonnull PerformanceInspector sender) {
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN + "===== Slimefun Lag Profiler =====");
         if(totalRunTime!=0){
             sender.sendMessage(
-                ChatColor.GOLD + "Async Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime));
+                ChatColor.GOLD + (enableAsyncTicker?"Async":"Common") + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime) );
         }else{
             sender.sendMessage(
-                ChatColor.GOLD + "Async ticker not enabled!" );
+                ChatColor.GOLD +  " Ticker Total time statistics Not enabled ");
         }
         sender.sendMessage(
                 ChatColor.GOLD + "Total Machine time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalElapsedTime));

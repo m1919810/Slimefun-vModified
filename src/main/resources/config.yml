@@ -62,6 +62,7 @@ URID:
   info-delay: 3000
   custom-ticker-delay: 10
   enable-tickers: true
+  enable-async-tickers: true
   summarize-chunk-timings: true
 
 networks:

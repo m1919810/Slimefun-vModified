@@ -344,7 +344,8 @@ public class SlimefunProfiler {
 
     protected float getPercentageOfTick() {
         //float millis = totalElapsedTime / 1000000.0F;
-        float millis = this.totalNsRunTime / 1000000.0F;
+        //use real run time instead of totalElapsedTime
+        float millis =( this.totalNsRunTime) / 1000000.0F;
         float fraction = (millis * 100.0F) / MAX_TICK_DURATION;
 
         return Math.round((fraction * 100.0F) / 100.0F);

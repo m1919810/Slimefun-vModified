@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.items;
 
 import io.github.bakedlibs.dough.common.CommonPatterns;
+import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.items.ItemMetaSnapshot;
 import io.github.bakedlibs.dough.skins.PlayerHead;
 import io.github.bakedlibs.dough.skins.PlayerSkin;
@@ -46,12 +47,8 @@ public class SlimefunItemStack extends ItemStack {
     private boolean locked = false;
     private String texture = null;
 
-    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item) {
+    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item, @Nonnull Consumer<ItemMeta> consumer) {
         super(item.getType(), item.getAmount());
-
-        if (item.hasItemMeta()) {
-            setItemMeta(item.getItemMeta());
-        }
 
         Validate.notNull(id, "The Item id must never be null!");
         Validate.isTrue(
@@ -64,20 +61,17 @@ public class SlimefunItemStack extends ItemStack {
 
         this.id = id;
 
-        ItemMeta meta = getItemMeta();
+        ItemMeta meta = item.hasItemMeta()?item.getItemMeta(): getItemMeta();
 
         Slimefun.getItemDataService().setItemData(meta, id);
         Slimefun.getItemTextureService().setTexture(meta, id);
+        consumer.accept(meta);
 
         setItemMeta(meta);
     }
-
-    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item, @Nonnull Consumer<ItemMeta> consumer) {
-        this(id, item);
-
-        ItemMeta im = getItemMeta();
-        consumer.accept(im);
-        setItemMeta(im);
+    private static final Consumer<ItemMeta> DEFAULT_CONSUMER=(itemMeta -> {});
+    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item) {
+        this(id, item,DEFAULT_CONSUMER);
     }
 
     public SlimefunItemStack(@Nonnull String id, @Nonnull Material type, @Nonnull Consumer<ItemMeta> consumer) {
@@ -319,7 +313,12 @@ public class SlimefunItemStack extends ItemStack {
 
     @Override
     public ItemStack clone() {
-        return new SlimefunItemStack(id, this);
+        //return new SlimefunItemStack(id, this);
+        ItemStack stack=super.clone();
+        if(stack instanceof SlimefunItemStack sfitem){
+            sfitem.locked=false;
+        }
+        return stack;
     }
 
     @Override

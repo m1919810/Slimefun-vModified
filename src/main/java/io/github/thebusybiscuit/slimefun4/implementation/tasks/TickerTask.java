@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -48,7 +49,7 @@ public class TickerTask implements Runnable {
     protected int tickRate;
     protected boolean halted = false;
     protected boolean running = false;
-
+    protected AtomicInteger tickCount = new AtomicInteger(0);
     protected volatile boolean paused = false;
 
     /**
@@ -63,12 +64,16 @@ public class TickerTask implements Runnable {
         BukkitScheduler scheduler = plugin.getServer().getScheduler();
         scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
     }
-
+    protected static final int recoveryPeriod=600;
     /**
      * This method resets this {@link TickerTask} to run again.
      */
     protected void reset() {
         running = false;
+        int cnt= tickCount.incrementAndGet();
+        if(!this.bugs.isEmpty()&& cnt% (recoveryPeriod)==0) {
+            this.bugs.clear();
+        }
     }
 
     @Override
@@ -188,25 +193,26 @@ public class TickerTask implements Runnable {
 
     @ParametersAreNonnullByDefault
     protected void reportErrors(Location l, SlimefunItem item, Throwable x) {
-        BlockPosition position = new BlockPosition(l);
-        int errors = bugs.getOrDefault(position, 0) + 1;
 
-        if (errors == 1) {
-            // Generate a new Error-Report
-            new ErrorReport<>(x, l, item);
-            bugs.put(position, errors);
-        } else if (errors == 4) {
+        BlockPosition position = new BlockPosition(l);
+        Integer disable= bugs.compute(position,(pos,i)->{
+            if(i==null){
+                new ErrorReport<>(x, l, item);
+                return 1;
+            }else if(i>=4){
+                return null;
+            }else{
+                return i+1;
+            }
+        });
+        if(disable==null){
+            disableTicker(l);
             Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                 l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
             });
             Slimefun.logger().log(Level.SEVERE, "在过去的 4 个 Tick 中发生多次错误，该方块对应的机器已被停用。");
             Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
             Slimefun.logger().log(Level.SEVERE, " ");
-            bugs.remove(position);
-
-            disableTicker(l);
-        } else {
-            bugs.put(position, errors);
         }
     }
 
@@ -303,8 +309,8 @@ public class TickerTask implements Runnable {
     public void disableTicker(@Nonnull Location l) {
         Validate.notNull(l, "Location cannot be null!");
 
+        ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
         synchronized (tickingLocations) {
-            ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
             Set<Location> locations = tickingLocations.get(chunk);
 
             if (locations != null) {
