@@ -1,5 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.util;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.StorageType;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -21,7 +22,14 @@ public class DataUtils {
         var stream = new ByteArrayOutputStream();
         try (var bs = new BukkitObjectOutputStream(stream)) {
             bs.writeObject(itemStack);
-            return Base64Coder.encodeLines(stream.toByteArray());
+            var itemStr = Base64Coder.encodeLines(stream.toByteArray());
+
+            if (Slimefun.getDatabaseManager().getBlockDataStorageType() != StorageType.SQLITE
+                    && itemStr.length() > 65535) {
+                throw new IllegalArgumentException("ItemStack too large");
+            }
+
+            return itemStr;
         } catch (IOException e) {
             e.printStackTrace();
             return "";

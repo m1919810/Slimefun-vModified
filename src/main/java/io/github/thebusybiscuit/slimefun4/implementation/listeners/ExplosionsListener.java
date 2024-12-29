@@ -14,6 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -40,6 +41,14 @@ public class ExplosionsListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent e) {
+        /**
+         * Wind charge **doesn't** break block but spigot still give us break list,
+         * so we just ignore it.
+         */
+        if (e.getEntityType() == EntityType.WIND_CHARGE) {
+            return;
+        }
+
         removeResistantBlocks(e.blockList().iterator());
     }
 
