@@ -320,6 +320,9 @@ public class SlimefunItemStack extends ItemStack {
         }
         return stack;
     }
+    public SlimefunItemStack copy(){
+        return new SlimefunItemStack(id,this);
+    }
 
     @Override
     public String toString() {
