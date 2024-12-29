@@ -46,31 +46,38 @@ public class SlimefunItemStack extends ItemStack {
     private boolean locked = false;
     private String texture = null;
 
-    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item, @Nonnull Consumer<ItemMeta> consumer) {
+    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item) {
         super(item.getType(), item.getAmount());
+
+        if (item.hasItemMeta()) {
+            setItemMeta(item.getItemMeta());
+        }
 
         Validate.notNull(id, "The Item id must never be null!");
         Validate.isTrue(
-                id.equals(id.toUpperCase(Locale.ROOT)), "Slimefun Item Ids must be uppercase! (e.g. 'MY_ITEM_ID')");
+            id.equals(id.toUpperCase(Locale.ROOT)), "Slimefun Item Ids must be uppercase! (e.g. 'MY_ITEM_ID')");
 
         if (Slimefun.instance() == null) {
             throw new PrematureCodeException(
-                    "A SlimefunItemStack must never be be created before your Plugin was enabled.");
+                "A SlimefunItemStack must never be be created before your Plugin was enabled.");
         }
 
         this.id = id;
 
-        ItemMeta meta = item.hasItemMeta()?item.getItemMeta(): getItemMeta();
+        ItemMeta meta = getItemMeta();
 
         Slimefun.getItemDataService().setItemData(meta, id);
         Slimefun.getItemTextureService().setTexture(meta, id);
-        consumer.accept(meta);
 
         setItemMeta(meta);
     }
-    private static final Consumer<ItemMeta> DEFAULT_CONSUMER=(itemMeta -> {});
-    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item) {
-        this(id, item,DEFAULT_CONSUMER);
+
+    public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item, @Nonnull Consumer<ItemMeta> consumer) {
+        this(id, item);
+
+        ItemMeta im = getItemMeta();
+        consumer.accept(im);
+        setItemMeta(im);
     }
 
     public SlimefunItemStack(@Nonnull String id, @Nonnull Material type, @Nonnull Consumer<ItemMeta> consumer) {
@@ -78,7 +85,7 @@ public class SlimefunItemStack extends ItemStack {
     }
 
     public SlimefunItemStack(
-            @Nonnull String id, @Nonnull Material type, @Nullable String name, @Nonnull Consumer<ItemMeta> consumer) {
+        @Nonnull String id, @Nonnull Material type, @Nullable String name, @Nonnull Consumer<ItemMeta> consumer) {
         this(id, type, meta -> {
             if (name != null) {
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
@@ -110,7 +117,7 @@ public class SlimefunItemStack extends ItemStack {
     }
 
     public SlimefunItemStack(
-            @Nonnull String id, @Nonnull Material type, @Nonnull Color color, @Nullable String name, String... lore) {
+        @Nonnull String id, @Nonnull Material type, @Nonnull Color color, @Nullable String name, String... lore) {
         this(id, type, im -> {
             if (name != null) {
                 im.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
@@ -137,11 +144,11 @@ public class SlimefunItemStack extends ItemStack {
     }
 
     public SlimefunItemStack(
-            @Nonnull String id,
-            @Nonnull Color color,
-            @Nonnull PotionEffect effect,
-            @Nullable String name,
-            String... lore) {
+        @Nonnull String id,
+        @Nonnull Color color,
+        @Nonnull PotionEffect effect,
+        @Nullable String name,
+        String... lore) {
         this(id, Material.POTION, im -> {
             if (name != null) {
                 im.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
@@ -183,7 +190,7 @@ public class SlimefunItemStack extends ItemStack {
     }
 
     public SlimefunItemStack(
-            @Nonnull String id, @Nonnull String texture, @Nullable String name, @Nonnull Consumer<ItemMeta> consumer) {
+        @Nonnull String id, @Nonnull String texture, @Nullable String name, @Nonnull Consumer<ItemMeta> consumer) {
         this(id, getSkull(id, texture), meta -> {
             if (name != null) {
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
@@ -302,22 +309,17 @@ public class SlimefunItemStack extends ItemStack {
             return texture;
         } else if (CommonPatterns.HEXADECIMAL.matcher(texture).matches()) {
             String value =
-                    "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/" + texture + "\"}}}";
+                "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/" + texture + "\"}}}";
             return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
         } else {
             throw new IllegalArgumentException(
-                    "The provided texture for Item \"" + id + "\" does not seem to be a valid texture String!");
+                "The provided texture for Item \"" + id + "\" does not seem to be a valid texture String!");
         }
     }
-    //fix issue 988 : addon menu can't open propertly due to cast error in 1.21+paper
+
     @Override
     public ItemStack clone() {
-        //return new SlimefunItemStack(id, this);
-        ItemStack stack=super.clone();
-        if(stack instanceof SlimefunItemStack sfitem){
-            sfitem.locked=false;
-        }
-        return stack;
+        return new SlimefunItemStack(id, this);
     }
 
     @Override
