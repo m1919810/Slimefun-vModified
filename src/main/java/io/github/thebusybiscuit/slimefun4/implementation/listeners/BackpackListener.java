@@ -10,12 +10,9 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -208,7 +205,7 @@ public class BackpackListener implements Listener {
             PlayerBackpack.getAsync(
                     item,
                     backpack -> {
-                        //fix the issue #978 dupe with fast-click backpack
+                        // fix the issue #978 dupe with fast-click backpack
                         backpack.open(p);
                         backpacks.put(p.getUniqueId(), item);
                         invSnapshot.put(

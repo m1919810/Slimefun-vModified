@@ -425,8 +425,8 @@ public class BlockDataController extends ADataController {
             return getBlockDataFromCache(l);
         }
 
-        //var chunk = l.getChunk();
-        //fix issue #935
+        // var chunk = l.getChunk();
+        // fix issue #935
         var chunkData = getChunkDataCache(l, false);
         var lKey = LocationUtils.getLocKey(l);
         if (chunkData != null) {
@@ -444,7 +444,7 @@ public class BlockDataController extends ADataController {
         var re =
                 result.isEmpty() ? null : new SlimefunBlockData(l, result.get(0).get(FieldKey.SLIMEFUN_ID));
         if (re != null) {
-            //fix issue #935
+            // fix issue #935
             chunkData = getChunkDataCache(l, true);
             chunkData.addBlockCacheInternal(re, false);
             re = chunkData.getBlockCacheInternal(lKey);
@@ -1272,14 +1272,15 @@ public class BlockDataController extends ADataController {
                 })
                 : loadedChunk.get(LocationUtils.getChunkKey(chunk));
     }
-    //fix issue 935: auto chunk load when using loc.getChunk(),if chunk data is already loaded into cache, we generate keyString using location,instead of loc.getChunk
+    // fix issue 935: auto chunk load when using loc.getChunk(),if chunk data is already loaded into cache, we generate
+    // keyString using location,instead of loc.getChunk
     private SlimefunChunkData getChunkDataCache(Location loc, boolean createOnNotExists) {
-        var re= loadedChunk.get(LocationUtils.getChunkKey(loc));
-        if(re!=null){
+        var re = loadedChunk.get(LocationUtils.getChunkKey(loc));
+        if (re != null) {
             return re;
-        }else{
-            //这里不要检测createOnNotExist 容易出事
-            return getChunkDataCache(loc.getChunk(),createOnNotExists);
+        } else {
+            // jump to origin getChunkDataCache and call getChunk() to trigger chunkLoad
+            return getChunkDataCache(loc.getChunk(), createOnNotExists);
         }
     }
 

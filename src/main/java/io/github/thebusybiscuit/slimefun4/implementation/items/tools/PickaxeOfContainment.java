@@ -51,7 +51,7 @@ public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
 
             if (b.getType() == Material.SPAWNER) {
                 ItemStack spawner = breakSpawner(b);
-                if(spawner!=null){
+                if (spawner != null) {
                     SlimefunUtils.spawnItem(
                             b.getLocation(), spawner, ItemSpawnReason.BROKEN_SPAWNER_DROP, true, e.getPlayer());
 
@@ -69,13 +69,13 @@ public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
         If the spawner's BlockStorage has BlockInfo, then it's not a vanilla spawner
         and should not give a broken spawner but a repaired one instead.
         */
-        SlimefunItem item=StorageCacheUtils.getSfItem(b.getLocation());
+        SlimefunItem item = StorageCacheUtils.getSfItem(b.getLocation());
         if (item instanceof RepairedSpawner) {
             spawner = (AbstractMonsterSpawner) SlimefunItems.REPAIRED_SPAWNER.getItem();
-        } else if (item ==null) {
+        } else if (item == null) {
             spawner = (AbstractMonsterSpawner) SlimefunItems.BROKEN_SPAWNER.getItem();
-        }else{
-            //do not drop anything when mining other addon's spawner-material machine
+        } else {
+            // do not drop anything when mining other addon's spawner-material machine
             return null;
         }
 

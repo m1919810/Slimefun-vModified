@@ -328,8 +328,8 @@ public final class SlimefunUtils {
                 String id = Slimefun.getItemDataService().getItemData(itemMeta).orElse(null);
 
                 if (id != null) {
-                    //to fix issue #976
-                    if(id.equals(sfItemStack.getItemId())) {
+                    // to fix issue #976
+                    if (id.equals(sfItemStack.getItemId())) {
                         if (checkDistinctiveItem) {
                             /*
                              * PR #3417
@@ -373,9 +373,9 @@ public final class SlimefunUtils {
                      * Some items can't rely on just IDs matching and will implement Distinctive Item
                      * in which case we want to use the method provided to compare
                      */
-                    //to fix issue #976
+                    // to fix issue #976
                     var match = id.equals(possibleItemId);
-                    if(match) {
+                    if (match) {
                         Optional<DistinctiveItem> optionalDistinctive = getDistinctiveItem(id);
                         if (optionalDistinctive.isPresent()) {
                             return optionalDistinctive.get().canStack(possibleSfItemMeta, itemMeta);
