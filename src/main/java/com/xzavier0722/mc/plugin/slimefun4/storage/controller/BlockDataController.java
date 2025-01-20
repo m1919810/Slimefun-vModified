@@ -183,6 +183,8 @@ public class BlockDataController extends ADataController {
             return;
         }
 
+        invSnapshots.remove(removed.getKey());
+
         if (!removed.isDataLoaded()) {
             return;
         }
@@ -515,6 +517,7 @@ public class BlockDataController extends ADataController {
     }
 
     public void saveBlockInventory(SlimefunBlockData blockData) {
+        //todo check if any problem
         var newInv = blockData.getMenuContents();
         List<Pair<ItemStack, Integer>> lastSave;
         if (newInv == null) {

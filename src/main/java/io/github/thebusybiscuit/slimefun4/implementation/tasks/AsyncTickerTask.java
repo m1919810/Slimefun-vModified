@@ -6,6 +6,8 @@ import io.github.bakedlibs.dough.blocks.ChunkPosition;
 import io.github.bakedlibs.dough.items.ItemStackSnapshot;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import lombok.Getter;
+import lombok.Setter;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -15,23 +17,72 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class AsyncTickerTask extends TickerTask{
-    boolean useAsync=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
+    @Setter
+    @Getter
+    private boolean useAsync=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
+    @Setter
+    private int threadCount = (Math.min(32767, Runtime.getRuntime().availableProcessors())/2)+4;
+    @Setter
+    private String poolType = "ForkJoinPool"; // "ThreadPoolExecutor";
+    //we figured out that ForkJoinPool performs better in my structure
+    //in ThreadPoolExecutor,one task costs more time to complete
+    //I don't know why
+    private AbstractExecutorService tickerThreadPool;
     public AsyncTickerTask(){
         Slimefun.logger().log(Level.INFO,"Setting up tick task");
         if(useAsync){
             Slimefun.logger().log(Level.INFO,"Async Ticker enabled");
+            resetTheadPool();
         }else {
             Slimefun.logger().log(Level.INFO,"Async Ticker disabled");
         }
+        
+    }
+    public synchronized void resetTheadPool(){
+        if(tickerThreadPool!=null){
+            tickerThreadPool.shutdown();
+        }
+        tickerThreadPool = genPool();
+
+    }
+    public AbstractExecutorService genPool(){
+        AbstractExecutorService result;
+       if("ThreadPoolExecutor".equals(poolType)){
+           var re= new ThreadPoolExecutor(threadCount,2*threadCount-2,60,TimeUnit.SECONDS,
+               new ArrayBlockingQueue<>(50000),new ThreadPoolExecutor.CallerRunsPolicy());
+           Slimefun.logger().log(Level.INFO,"Starting ticker ThreadPoolExecutor with core pool size "+re.getCorePoolSize()+" and max pool size "+re.getMaximumPoolSize());
+           result = re;
+       }else if("ForkJoinPool".equals(poolType)){
+           var re= new ForkJoinPool(threadCount);
+           Slimefun.logger().log(Level.INFO,"Starting ticker ForkJoinPool with parallelism "+re.getParallelism());
+           result = re;
+       }
+       else {
+           result = ForkJoinPool.commonPool();
+           Slimefun.logger().log(Level.INFO,"Starting ticker using common ForkJoinPool");
+       }
+       return result;
+    }
+    public AbstractExecutorService getTickerThreadPool(){
+        if(tickerThreadPool==null){
+            resetTheadPool();
+        }
+        return tickerThreadPool;
     }
     @Override
     public void run() {
@@ -59,19 +110,29 @@ public class AsyncTickerTask extends TickerTask{
                 synchronized (tickingLocations) {
                     loc = new HashSet<>(tickingLocations.keySet());
                 }
-
+                Map<ChunkPosition, Iterator<Location>> chunkMachineSequence = new HashMap<>();
                 for (ChunkPosition entry : loc) {
-                    HashSet<Location> locs;
-                    synchronized (tickingLocations) {
-                        locs=new HashSet<>(tickingLocations.get(entry));
+                    try{
+                        if(entry.isLoaded()){
+                            HashSet<Location> locs;
+                            synchronized (tickingLocations) {
+                                locs=new HashSet<>(tickingLocations.get(entry));
+                            }
+                            chunkMachineSequence.put(entry, locs.iterator());
+                        }
+                    } catch (ArrayIndexOutOfBoundsException | NumberFormatException x) {
+                        Slimefun.logger().log(Level.SEVERE, x, () -> "An Exception has occurred while trying to resolve Chunk: " + entry);
                     }
-                    tickChunkAsync(entry,tickers,syncTickers,locs);
-
                 }
+                tickChunkAsync(chunkMachineSequence,tickers,syncTickers);
                 CompletableFuture.allOf(tickers.values().toArray(CompletableFuture[]::new)).orTimeout(10, TimeUnit.SECONDS).exceptionally(ex -> {
                     // 超时或者其他异常的处理逻辑
-                    Slimefun.logger()
-                        .log(Level.SEVERE,()->{return "Timeout or error occurred in AsyncTickTask: " + ex.getMessage();});
+                    Slimefun.logger().log(Level.SEVERE,ex,()->{return "Timeout or error occurred in AsyncTickTask: ";});
+                    Slimefun.logger().log(Level.WARNING,()->{return "Resetting Thread Pool... ";});
+                    if(!this.halted &&!this.paused){
+                        resetTheadPool();
+                    }
+
                     return null;
                 }).join();
             }
@@ -96,19 +157,22 @@ public class AsyncTickerTask extends TickerTask{
             reset();
         }
     }
-    private void tickChunkAsync(ChunkPosition chunk,HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncTickers,HashSet<Location> locations){
-        try {
-            // Only continue if the Chunk is actually loaded
-
-            if (chunk.isLoaded()) {
-                for (Location l : locations) {
-                    tickLocationAsync(tickers,syncTickers, l);
+    //todo we can reSchedule chunk execute order
+    //todo for example : each chunk launch first machine task, then another,then another
+    //this may help decrease concurrent errors due to locality,and it also keeps a chunk's task-launching order
+    private void tickChunkAsync(Map<ChunkPosition, Iterator<Location>> machineSequence,HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncTickers){
+        while(!machineSequence.isEmpty()){
+            var iter = machineSequence.entrySet().iterator();
+            while(iter.hasNext()){
+                var entry = iter.next();
+                var locationIter = entry.getValue();
+                if(locationIter.hasNext()){
+                    Location location = locationIter.next();
+                    tickLocationAsync(tickers,syncTickers,location);
+                }else {
+                    iter.remove();
                 }
             }
-
-        } catch (ArrayIndexOutOfBoundsException | NumberFormatException x) {
-            Slimefun.logger()
-                .log(Level.SEVERE, x, () -> "An Exception has occurred while trying to resolve Chunk: " + chunk);
         }
     }
     private void tickLocationAsync(@Nonnull HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncticker, @Nonnull Location l) {
@@ -128,7 +192,6 @@ public class AsyncTickerTask extends TickerTask{
                 if (ticker.isSynchronized()) {
                     syncticker.add(ticker);
                     Slimefun.getProfiler().scheduleEntries(1);
-
                     /**
                      * We are inserting a new timestamp because synchronized actions
                      * are always ran with a 50ms delay (1 game tick)
@@ -153,7 +216,7 @@ public class AsyncTickerTask extends TickerTask{
                                 Slimefun.getProfiler().closeEntry(l, item, timestamp);
                             }
                         };
-                        return future==null?CompletableFuture.runAsync(tickTask).exceptionally((ignored)->null):future.thenRunAsync(tickTask).exceptionally((ignored)->null);
+                        return future==null?CompletableFuture.runAsync(tickTask,getTickerThreadPool()).exceptionally((ignored)->null):future.thenRunAsync(tickTask,getTickerThreadPool()).exceptionally((ignored)->null);
                     });
                 }
             } catch (Throwable x) {

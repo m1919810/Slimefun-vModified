@@ -313,6 +313,15 @@ public class SlimefunItemStack extends ItemStack {
 
     @Override
     public ItemStack clone() {
+        return new SlimefunItemStack(id, this);
+//        ItemStack stack=super.clone();
+//        if(stack instanceof SlimefunItemStack sfitem){
+//            sfitem.locked=false;
+//        }
+//        return stack;
+    }
+
+    public ItemStack copy() {
         //return new SlimefunItemStack(id, this);
         ItemStack stack=super.clone();
         if(stack instanceof SlimefunItemStack sfitem){

@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.core.services.profiler;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.inspectors.PlayerPerformanceInspector;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncTickerTask;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.util.List;
@@ -57,13 +58,13 @@ class PerformanceSummary {
         items = profiler.getByItem();
     }
     private static boolean doSendChunkSummary= Slimefun.getCfg().getOrSetDefault("URID.summarize-chunk-timings",true);
-    private static boolean enableAsyncTicker=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
+    //private static boolean enableAsyncTicker=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
     public void send(@Nonnull PerformanceInspector sender) {
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN + "===== Slimefun Lag Profiler =====");
         if(totalRunTime!=0){
             sender.sendMessage(
-                ChatColor.GOLD + (enableAsyncTicker?"Async":"Common") + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime) );
+                ChatColor.GOLD + (((AsyncTickerTask)Slimefun.getTickerTask()).isUseAsync() ?"Async":"Common") + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime) );
         }else{
             sender.sendMessage(
                 ChatColor.GOLD +  " Ticker Total time statistics Not enabled ");

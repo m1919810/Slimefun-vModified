@@ -49,7 +49,7 @@ public class DirtyChestMenu extends ChestMenu {
     }
 
     public boolean isDirty() {
-        return changes > 0;
+        return true;
     }
 
     public int getUnsavedChanges() {

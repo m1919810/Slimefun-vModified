@@ -16,12 +16,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import lombok.Setter;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.scheduler.BukkitTask;
 
 /**
  * The {@link TickerTask} is responsible for ticking every {@link BlockTicker},
@@ -46,12 +49,13 @@ public class TickerTask implements Runnable {
      */
     protected final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
 
+    @Setter
     protected int tickRate;
     protected boolean halted = false;
     protected boolean running = false;
     protected AtomicInteger tickCount = new AtomicInteger(0);
     protected volatile boolean paused = false;
-
+    private BukkitTask tickTask;
     /**
      * This method starts the {@link TickerTask} on an asynchronous schedule.
      *
@@ -62,8 +66,19 @@ public class TickerTask implements Runnable {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
         BukkitScheduler scheduler = plugin.getServer().getScheduler();
-        scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
+        tickTask = scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
     }
+
+    public void restart(@Nonnull Slimefun plugin) {
+        this.halted = true;
+        if(tickTask != null) {
+            tickTask.cancel();
+        }
+        this.halted = false;
+        BukkitScheduler scheduler = plugin.getServer().getScheduler();
+        tickTask = scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
+    }
+
     protected static final int recoveryPeriod=600;
     /**
      * This method resets this {@link TickerTask} to run again.
