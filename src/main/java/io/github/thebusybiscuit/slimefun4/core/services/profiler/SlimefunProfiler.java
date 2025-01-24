@@ -374,6 +374,10 @@ public class SlimefunProfiler {
         return NumberUtils.getAsMillis(totalElapsedTime);
     }
 
+    public String getRunTime(){
+        return NumberUtils.getAsMillis(totalNsRunTime);
+    }
+
     public int getTickRate() {
         return Slimefun.getTickerTask().getTickRate();
     }

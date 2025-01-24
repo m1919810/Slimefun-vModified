@@ -20,6 +20,7 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Content;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import net.milkbowl.vault.chat.Chat;
 
 class PerformanceSummary {
 
@@ -65,6 +66,9 @@ class PerformanceSummary {
         if(totalRunTime!=0){
             sender.sendMessage(
                 ChatColor.GOLD + (((AsyncTickerTask)Slimefun.getTickerTask()).isUseAsync() ?"Async":"Common") + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime) );
+            if(((AsyncTickerTask)Slimefun.getTickerTask()).isUseAsync()){
+                sender.sendMessage(ChatColor.GOLD +"多线程Ticker已启用,下方机器统计数据仅做参考!");
+            }
         }else{
             sender.sendMessage(
                 ChatColor.GOLD +  " Ticker Total time statistics Not enabled ");

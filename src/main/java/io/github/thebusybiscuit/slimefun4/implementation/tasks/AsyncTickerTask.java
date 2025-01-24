@@ -29,6 +29,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 public class AsyncTickerTask extends TickerTask{
@@ -54,7 +55,7 @@ public class AsyncTickerTask extends TickerTask{
         
     }
     public synchronized void resetTheadPool(){
-        if(tickerThreadPool!=null){
+        if(tickerThreadPool!=null&& tickerThreadPool!=ForkJoinPool.commonPool()){
             tickerThreadPool.shutdown();
         }
         tickerThreadPool = genPool();
@@ -84,6 +85,7 @@ public class AsyncTickerTask extends TickerTask{
         }
         return tickerThreadPool;
     }
+    private static final Map<ChunkPosition, AtomicInteger> chunkWeakLock = new ConcurrentHashMap<>();
     @Override
     public void run() {
         if(!useAsync){
@@ -165,31 +167,50 @@ public class AsyncTickerTask extends TickerTask{
             var iter = machineSequence.entrySet().iterator();
             while(iter.hasNext()){
                 var entry = iter.next();
-                var locationIter = entry.getValue();
-                if(locationIter.hasNext()){
-                    Location location = locationIter.next();
-                    tickLocationAsync(tickers,syncTickers,location);
-                }else {
-                    iter.remove();
+                ChunkPosition chunk = entry.getKey();
+                //plan to use more nb lock
+                AtomicInteger chunkCounter = chunkWeakLock.computeIfAbsent(chunk,(c)->new AtomicInteger(0));
+                int chunkC = chunkCounter.getAndIncrement();
+                if(chunkC==0){
+                    var locationIter = entry.getValue();
+                    if(locationIter.hasNext()){
+                        Location location = locationIter.next();
+                        tickLocationAsync(tickers,syncTickers,location,chunkCounter);
+                    }else {
+                        iter.remove();
+                    }
+                }else if(chunkC>20){
+                    //if chunk counter has been visited for more than 20 time, then let it go,
+                    //this means the machine probably run for a long time, or the amount of chunk left is not so much
+                    //then we risk async operation and let it go
+                    chunkCounter.set(0);
                 }
+
             }
         }
+        //for most time .this map is reusable
+        //chunk amount will not be more than 10000 chunk for most case, so there's no need to clear it
+        //chunkWeakLock.clear();
     }
-    private void tickLocationAsync(@Nonnull HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncticker, @Nonnull Location l) {
+    private void tickLocationAsync(@Nonnull HashMap<BlockTicker,CompletableFuture<Void>> tickers,HashSet<BlockTicker> syncticker, @Nonnull Location l,AtomicInteger chunkCounter) {
         var blockData = StorageCacheUtils.getBlock(l);
-        if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
+        if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove() ) {
+            chunkCounter.set(0);
             return ;
         }
         SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
 
         if (item != null && item.getBlockTicker() != null) {
             if (item.isDisabledIn(l.getWorld())) {
+                chunkCounter.set(0);
                 return ;
             }
             try {
                 BlockTicker ticker = item.getBlockTicker();
                 ticker.update();
                 if (ticker.isSynchronized()) {
+                    //sync task run later, so lock is not required
+                    chunkCounter.set(0);
                     syncticker.add(ticker);
                     Slimefun.getProfiler().scheduleEntries(1);
                     /**
@@ -208,18 +229,24 @@ public class AsyncTickerTask extends TickerTask{
                         Runnable tickTask=()->{
                             long timestamp = Slimefun.getProfiler().newEntry();
                             try {
+                                if(blockData.isPendingRemove()){
+                                    return;
+                                }
                                 Block b = l.getBlock();
                                 ticker.tick(b, item, blockData);
                             } catch (Throwable x) {
                                 reportErrors(l, item, x);
                             } finally {
+                                //end chunk weak lock when async task end
+                                chunkCounter.set(0);
                                 Slimefun.getProfiler().closeEntry(l, item, timestamp);
                             }
                         };
-                        return future==null?CompletableFuture.runAsync(tickTask,getTickerThreadPool()).exceptionally((ignored)->null):future.thenRunAsync(tickTask,getTickerThreadPool()).exceptionally((ignored)->null);
+                        return future==null?CompletableFuture.runAsync(tickTask,getTickerThreadPool()).exceptionally((ignored)->{chunkCounter.set(0);return null;}):future.thenRunAsync(tickTask,getTickerThreadPool()).exceptionally((ignored)->{chunkCounter.set(0);return null;});
                     });
                 }
             } catch (Throwable x) {
+                chunkCounter.set(0);
                 reportErrors(l, item, x);
             }
         }
