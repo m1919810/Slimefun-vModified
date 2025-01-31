@@ -23,7 +23,6 @@ import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlock;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.implementation.items.VanillaItem;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncRecipeChoiceTask;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
@@ -100,7 +99,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
      * @param p
      *            The {@link Player} who opened his {@link SlimefunGuide}
      * @param profile
-     *            The {@link PlayerProfile} of the {@link Player}f
+     *            The {@link PlayerProfile} of the {@link Player}
      *
      * @return a {@link List} of visible {@link ItemGroup} instances
      */
@@ -346,7 +345,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
                         if (sfitem instanceof MultiBlockMachine) {
                             Slimefun.getLocalization().sendMessage(pl, "guide.cheat.no-multiblocks");
                         } else {
-                            ItemStack clonedItem = new CustomItemStack( sfitem.getItem());
+                            ItemStack clonedItem = sfitem.getItem().clone();
 
                             if (action.isShiftClicked()) {
                                 clonedItem.setAmount(clonedItem.getMaxStackSize());
@@ -417,7 +416,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
                 menu.addMenuClickHandler(index, (pl, slot, itm, action) -> {
                     try {
                         if (!isSurvivalMode()) {
-                            pl.getInventory().addItem(new ItemStack( slimefunItem.getItem()));
+                            pl.getInventory().addItem(slimefunItem.getItem().clone());
                         } else {
                             displayItem(profile, slimefunItem, true);
                         }

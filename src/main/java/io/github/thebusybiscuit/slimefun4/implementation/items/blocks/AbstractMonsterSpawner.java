@@ -14,7 +14,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -125,6 +124,7 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
 
         meta.setLore(lore);
         item.setItemMeta(meta);
+
         return item;
     }
     //todo add method to solve blockState compare
