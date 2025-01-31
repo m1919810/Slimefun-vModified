@@ -299,10 +299,10 @@ public final class SlimefunUtils {
             boolean checkAmount,
             boolean checkDistinctiveItem,
             boolean checkCustomModelData) {
-        if (item == null||item.getAmount()<=0) {
-            //check isAir
-            return (sfitem == null)||(sfitem.getAmount()<=0);
-        } else if ( (sfitem == null||sfitem.getAmount()<=0)
+        if (item == null) {
+            //remove getAmount<0 check
+            return sfitem == null;
+        }  else if ( (sfitem == null)
                 || item.getType() != sfitem.getType()
                 || checkAmount && item.getAmount() < sfitem.getAmount()) {
             return false;

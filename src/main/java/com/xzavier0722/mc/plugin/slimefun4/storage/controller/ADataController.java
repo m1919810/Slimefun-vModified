@@ -11,6 +11,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.task.QueuedWriteTask;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,7 +63,15 @@ public abstract class ADataController {
                 var doneTaskPercent = String.format("%.1f", (totalTask - pendingTask) / totalTask * 100);
                 logger.log(Level.INFO, "数据保存中，请稍候... 剩余 {0} 个任务 ({1}%)", new Object[] {pendingTask, doneTaskPercent});
                 TimeUnit.SECONDS.sleep(1);
-                pendingTask = scheduledWriteTasks.size();
+                var newpendingTask = scheduledWriteTasks.size();
+                if( newpendingTask == pendingTask){
+                    var checkTask = Set.copyOf( scheduledWriteTasks.keySet());
+                    for (var task : checkTask) {
+                        logger.log(Level.INFO,"查看可能卡顿的数据库任务: "+task.toString());
+                    }
+                    logger.log(Level.INFO,"writer Executor: "+writeExecutor.isShutdown());
+                }
+                pendingTask = newpendingTask;
             }
 
             logger.info("数据保存完成.");
@@ -110,6 +119,8 @@ public abstract class ADataController {
                 protected void onError(Throwable e) {
                     Slimefun.logger().log(Level.SEVERE, "Exception thrown while executing write task: ");
                     e.printStackTrace();
+                    //whatever, remove
+                    scheduledWriteTasks.remove(scopeToUse);
                 }
             };
             queuedTask.queue(key, task);
