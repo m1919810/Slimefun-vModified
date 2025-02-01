@@ -9,10 +9,10 @@ import io.github.thebusybiscuit.slimefun4.api.events.ExplosiveToolBreakBlocksEve
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunBlockBreakEvent;
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunBlockPlaceEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.core.attributes.NotCardinallyRotatable;
-import io.github.thebusybiscuit.slimefun4.core.attributes.NotDiagonallyRotatable;
 import io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable;
-import io.github.thebusybiscuit.slimefun4.core.attributes.NotRotatable;
+import io.github.thebusybiscuit.slimefun4.core.attributes.rotations.NotCardinallyRotatable;
+import io.github.thebusybiscuit.slimefun4.core.attributes.rotations.NotDiagonallyRotatable;
+import io.github.thebusybiscuit.slimefun4.core.attributes.rotations.NotRotatable;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ToolUseHandler;
@@ -111,11 +111,6 @@ public class BlockListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent e) {
         ItemStack item = e.getItemInHand();
         SlimefunItem sfItem = SlimefunItem.getByItem(item);
-
-        // TODO: Protection manager is null in testing environment.
-        if (!Slimefun.instance().isUnitTest()) {
-            Slimefun.getProtectionManager().logAction(e.getPlayer(), e.getBlock(), Interaction.PLACE_BLOCK);
-        }
 
         if (sfItem != null && !(sfItem instanceof NotPlaceable)) {
             if (!sfItem.canUse(e.getPlayer(), true)) {

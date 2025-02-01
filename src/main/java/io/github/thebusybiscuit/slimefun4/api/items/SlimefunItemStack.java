@@ -60,7 +60,7 @@ public class SlimefunItemStack extends ItemStack {
 
         this.id = id;
 
-        ItemMeta meta = item.hasItemMeta()?item.getItemMeta(): getItemMeta();
+        ItemMeta meta = item.hasItemMeta() ? item.getItemMeta() : getItemMeta();
 
         Slimefun.getItemDataService().setItemData(meta, id);
         Slimefun.getItemTextureService().setTexture(meta, id);
@@ -68,9 +68,11 @@ public class SlimefunItemStack extends ItemStack {
 
         setItemMeta(meta);
     }
-    private static final Consumer<ItemMeta> DEFAULT_CONSUMER=(itemMeta -> {});
+
+    private static final Consumer<ItemMeta> DEFAULT_CONSUMER = (itemMeta -> {});
+
     public SlimefunItemStack(@Nonnull String id, @Nonnull ItemStack item) {
-        this(id, item,DEFAULT_CONSUMER);
+        this(id, item, DEFAULT_CONSUMER);
     }
 
     public SlimefunItemStack(@Nonnull String id, @Nonnull Material type, @Nonnull Consumer<ItemMeta> consumer) {
@@ -313,18 +315,18 @@ public class SlimefunItemStack extends ItemStack {
     @Override
     public ItemStack clone() {
         return new SlimefunItemStack(id, this);
-//        ItemStack stack=super.clone();
-//        if(stack instanceof SlimefunItemStack sfitem){
-//            sfitem.locked=false;
-//        }
-//        return stack;
+        //        ItemStack stack=super.clone();
+        //        if(stack instanceof SlimefunItemStack sfitem){
+        //            sfitem.locked=false;
+        //        }
+        //        return stack;
     }
 
     public ItemStack copy() {
-        //return new SlimefunItemStack(id, this);
-        ItemStack stack=super.clone();
-        if(stack instanceof SlimefunItemStack sfitem){
-            sfitem.locked=false;
+        // return new SlimefunItemStack(id, this);
+        ItemStack stack = super.clone();
+        if (stack instanceof SlimefunItemStack sfitem) {
+            sfitem.locked = false;
         }
         return stack;
     }

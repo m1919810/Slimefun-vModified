@@ -1,9 +1,7 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.task;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordKey;
-import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -19,7 +17,7 @@ public class QueuedWriteTask implements Runnable {
     @Override
     public final void run() {
         if (aborted) {
-            Slimefun.logger().log(Level.INFO,"Write Task Aborted");
+            Slimefun.logger().log(Level.INFO, "Write Task Aborted");
             return;
         }
 

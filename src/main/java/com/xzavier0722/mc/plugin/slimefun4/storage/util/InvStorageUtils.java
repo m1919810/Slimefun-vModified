@@ -51,7 +51,7 @@ public class InvStorageUtils {
                 }
                 continue;
             }
-            //more strict difference check
+            // more strict difference check
             if (curr != each.getFirstValue() || curr.getAmount() != each.getSecondValue()) {
                 re.add(i);
             }

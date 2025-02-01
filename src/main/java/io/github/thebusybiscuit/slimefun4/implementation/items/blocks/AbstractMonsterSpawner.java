@@ -59,22 +59,21 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
 
             if ((stripColor.startsWith("类型: ") || stripColor.startsWith("Type:"))
                     && (!line.contains("<类型>") || line.contains("<Type>"))) {
-                try{
+                try {
                     EntityType type = EntityType.valueOf(ChatColor.stripColor(line)
                             .replace("类型: ", "")
                             .replace("Type: ", "")
                             .replace(' ', '_')
                             .toUpperCase(Locale.ROOT));
                     return Optional.of(type);
-                }catch (IllegalArgumentException noEnumTypeIgnored){
+                } catch (IllegalArgumentException noEnumTypeIgnored) {
                 }
             }
         }
-        if(meta instanceof BlockStateMeta blockStateMeta){
-            if(blockStateMeta.hasBlockState()&& blockStateMeta.getBlockState() instanceof CreatureSpawner spawner){
-                EntityType type=spawner.getSpawnedType();
-                if(type!=null)
-                    return Optional.of(type);
+        if (meta instanceof BlockStateMeta blockStateMeta) {
+            if (blockStateMeta.hasBlockState() && blockStateMeta.getBlockState() instanceof CreatureSpawner spawner) {
+                EntityType type = spawner.getSpawnedType();
+                if (type != null) return Optional.of(type);
             }
         }
 
@@ -93,11 +92,12 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
      */
     @Nonnull
     public ItemStack getItemForEntityType(@Nullable EntityType type) {
-        //Validate.notNull(type, "The EntityType cannot be null");
+        // Validate.notNull(type, "The EntityType cannot be null");
 
         ItemStack item = getItem().clone();
         ItemMeta meta = item.getItemMeta();
-        if(type!=null&&type.isSpawnable()) {
+        // fix: you can't set null type or a not-spawnable type, for example ,player
+        if (type != null && type.isSpawnable()) {
 
             // Fixes #2583 - Proper NBT handling of Spawners
             if (meta instanceof BlockStateMeta stateMeta) {
@@ -116,7 +116,7 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
         for (int i = 0; i < lore.size(); i++) {
             String currentLine = lore.get(i);
             if (currentLine.contains("<Type>") || currentLine.contains("<类型>")) {
-                String typeName = type==null?"空" :ChatUtils.humanize(type.name());
+                String typeName = type == null ? "空" : ChatUtils.humanize(type.name());
                 lore.set(i, currentLine.replace("<Type>", typeName).replace("<类型>", typeName));
                 break;
             }
@@ -124,18 +124,22 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
 
         meta.setLore(lore);
         item.setItemMeta(meta);
-
         return item;
     }
-    //todo add method to solve blockState compare
-    public boolean canStack(@Nonnull ItemMeta itemMetaOne, @Nonnull ItemMeta itemMetaTwo){
-        if(itemMetaOne instanceof BlockStateMeta stateMeta1 && itemMetaTwo instanceof BlockStateMeta stateMeta2){
-            boolean hasBlock1=stateMeta1.hasBlockState();
-            boolean hasBlock2=stateMeta2.hasBlockState();
-            if(hasBlock1&&hasBlock2){
-                return itemMetaOne.equals(itemMetaTwo);
+    // to fix the bug of stacking two BROKEN_SPAWNER/REINFORCED_SPAWNER containing different EntityType using cargo or
+    // machine
+    public boolean canStack(@Nonnull ItemMeta itemMetaOne, @Nonnull ItemMeta itemMetaTwo) {
+        if (itemMetaOne instanceof BlockStateMeta blockStateMeta1
+                && itemMetaTwo instanceof BlockStateMeta blockStateMeta2) {
+            if (blockStateMeta1.hasBlockState() && blockStateMeta2.hasBlockState()) {
+                // BlockState.equals do not compare these data
+                if (blockStateMeta1.getBlockState() instanceof CreatureSpawner spawner1
+                        && blockStateMeta2.getBlockState() instanceof CreatureSpawner spawner2) {
+                    return spawner1.getSpawnedType() == spawner2.getSpawnedType();
+                }
+            } else {
+                return blockStateMeta1.hasBlockState() == blockStateMeta2.hasBlockState();
             }
-            return hasBlock1==hasBlock2;
         }
         return false;
     }

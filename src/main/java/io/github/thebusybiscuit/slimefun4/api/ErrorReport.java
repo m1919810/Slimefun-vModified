@@ -81,33 +81,33 @@ public class ErrorReport<T extends Throwable> {
     @ParametersAreNonnullByDefault
     public ErrorReport(T throwable, Location l, SlimefunItem item) {
         this(throwable, item.getAddon(), stream -> {
-            stream.println("Block Info:");
-            stream.println("  World: " + l.getWorld().getName());
+            stream.println("方块信息:");
+            stream.println("  世界: " + l.getWorld().getName());
             stream.println("  X: " + l.getBlockX());
             stream.println("  Y: " + l.getBlockY());
             stream.println("  Z: " + l.getBlockZ());
-            stream.println("  Material: " + l.getBlock().getType());
-            stream.println(
-                    "  Block Data: " + l.getBlock().getBlockData().getClass().getName());
-            stream.println("  State: " + l.getBlock().getState().getClass().getName());
+            stream.println("  方块类型: " + l.getBlock().getType());
+            stream.println("  方块数据: " + l.getBlock().getBlockData().getClass().getName());
+            stream.println("  状态: " + l.getBlock().getState().getClass().getName());
             stream.println();
 
             if (item.getBlockTicker() != null) {
-                stream.println("Ticker-Info:");
-                stream.println("  Type: " + (item.getBlockTicker().isSynchronized() ? "Synchronized" : "Asynchronous"));
+                stream.println("Ticker 信息:");
+                stream.println("  类型: " + (item.getBlockTicker().isSynchronized() ? "同步" : "异步"));
                 stream.println();
             }
 
             if (item instanceof EnergyNetProvider) {
-                stream.println("Ticker-Info:");
-                stream.println("  Type: Indirect (Energy Network)");
+                stream.println("Ticker 信息:");
+                stream.println("  类型: 间接 (由能源网络管理)");
                 stream.println();
             }
 
-            stream.println("Slimefun Data:");
+            stream.println("Slimefun 数据:");
             stream.println("  ID: " + item.getId());
             var blockData =
                     Slimefun.getDatabaseManager().getBlockDataController().getBlockData(l);
+
             if (blockData == null) {
                 stream.println("Block data is not presented.");
             } else {

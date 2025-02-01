@@ -222,7 +222,7 @@ public class BlockDataController extends ADataController {
             return getBlockDataFromCache(l);
         }
 
-        //var chunk = l.getChunk();
+        // var chunk = l.getChunk();
         var chunkData = getChunkDataCache(l, false);
         var lKey = LocationUtils.getLocKey(l);
         if (chunkData != null) {
@@ -517,7 +517,7 @@ public class BlockDataController extends ADataController {
     }
 
     public void saveBlockInventory(SlimefunBlockData blockData) {
-        //todo check if any problem
+        // todo check if any problem
         var newInv = blockData.getMenuContents();
         List<Pair<ItemStack, Integer>> lastSave;
         if (newInv == null) {
@@ -748,15 +748,16 @@ public class BlockDataController extends ADataController {
                 })
                 : loadedChunk.get(LocationUtils.getChunkKey(chunk));
     }
+
     private SlimefunChunkData getChunkDataCache(Location loc, boolean createOnNotExists) {
-        //我直接tm甩锅到上面
-        //有啥事都别怪我，我只是加了一条检测 并不会触发什么东西
-        var a= loadedChunk.get(LocationUtils.getChunkKey(loc));
-        if(a!=null){
+        // 我直接tm甩锅到上面
+        // 有啥事都别怪我，我只是加了一条检测 并不会触发什么东西
+        var a = loadedChunk.get(LocationUtils.getChunkKey(loc));
+        if (a != null) {
             return a;
-        }else{
-            //这里不要检测createOnNotExist 容易出事
-            return getChunkDataCache(loc.getChunk(),createOnNotExists);
+        } else {
+            // 这里不要检测createOnNotExist 容易出事
+            return getChunkDataCache(loc.getChunk(), createOnNotExists);
         }
     }
 

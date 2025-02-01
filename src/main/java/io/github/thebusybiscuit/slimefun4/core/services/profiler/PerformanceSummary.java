@@ -13,14 +13,11 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import lombok.Setter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Content;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import net.milkbowl.vault.chat.Chat;
 
 class PerformanceSummary {
 
@@ -32,10 +29,12 @@ class PerformanceSummary {
     private final SlimefunProfiler profiler;
     private final PerformanceRating rating;
     private final long totalElapsedTime;
+
     public PerformanceSummary setTotalRunTime(final long totalRunTime) {
-        this.totalRunTime=totalRunTime;
+        this.totalRunTime = totalRunTime;
         return this;
     }
+
     private long totalRunTime;
     private final int totalTickedBlocks;
     private final float percentage;
@@ -53,25 +52,25 @@ class PerformanceSummary {
         this.totalTickedBlocks = totalTickedBlocks;
         this.tickRate = profiler.getTickRate();
 
-
         chunks = profiler.getByChunk();
         plugins = profiler.getByPlugin();
         items = profiler.getByItem();
     }
-    private static boolean doSendChunkSummary= Slimefun.getCfg().getOrSetDefault("URID.summarize-chunk-timings",true);
-    //private static boolean enableAsyncTicker=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
+
+    private static boolean doSendChunkSummary = Slimefun.getCfg().getOrSetDefault("URID.summarize-chunk-timings", true);
+    // private static boolean enableAsyncTicker=Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers",true);
     public void send(@Nonnull PerformanceInspector sender) {
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN + "===== Slimefun Lag Profiler =====");
-        if(totalRunTime!=0){
+        if (totalRunTime != 0) {
             sender.sendMessage(
-                ChatColor.GOLD + (((AsyncTickerTask)Slimefun.getTickerTask()).isUseAsync() ?"Async":"Common") + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime) );
-            if(((AsyncTickerTask)Slimefun.getTickerTask()).isUseAsync()){
-                sender.sendMessage(ChatColor.GOLD +"多线程Ticker已启用,下方机器统计数据仅做参考!");
+                    ChatColor.GOLD + (((AsyncTickerTask) Slimefun.getTickerTask()).isUseAsync() ? "Async" : "Common")
+                            + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime));
+            if (((AsyncTickerTask) Slimefun.getTickerTask()).isUseAsync()) {
+                sender.sendMessage(ChatColor.GOLD + "多线程Ticker已启用,下方机器统计数据仅做参考!");
             }
-        }else{
-            sender.sendMessage(
-                ChatColor.GOLD +  " Ticker Total time statistics Not enabled ");
+        } else {
+            sender.sendMessage(ChatColor.GOLD + " Ticker Total time statistics Not enabled ");
         }
         sender.sendMessage(
                 ChatColor.GOLD + "Total Machine time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalElapsedTime));
@@ -102,7 +101,7 @@ class PerformanceSummary {
                 return String.format(message, time + " | avg: " + average);
             }
         });
-        if(doSendChunkSummary){
+        if (doSendChunkSummary) {
             summarizeTimings(chunks.size(), "chunk", sender, chunks, entry -> {
                 int count = profiler.getBlocksInChunk(entry.getKey());
                 String time = NumberUtils.getAsMillis(entry.getValue());

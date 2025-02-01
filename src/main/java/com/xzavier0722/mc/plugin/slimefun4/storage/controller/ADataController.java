@@ -64,12 +64,12 @@ public abstract class ADataController {
                 logger.log(Level.INFO, "数据保存中，请稍候... 剩余 {0} 个任务 ({1}%)", new Object[] {pendingTask, doneTaskPercent});
                 TimeUnit.SECONDS.sleep(1);
                 var newpendingTask = scheduledWriteTasks.size();
-                if( newpendingTask == pendingTask){
-                    var checkTask = Set.copyOf( scheduledWriteTasks.keySet());
+                if (newpendingTask == pendingTask) {
+                    var checkTask = Set.copyOf(scheduledWriteTasks.keySet());
                     for (var task : checkTask) {
-                        logger.log(Level.INFO,"查看可能卡顿的数据库任务: "+task.toString());
+                        logger.log(Level.INFO, "查看可能卡顿的数据库任务: " + task.toString());
                     }
-                    logger.log(Level.INFO,"writer Executor: "+writeExecutor.isShutdown());
+                    logger.log(Level.INFO, "writer Executor: " + writeExecutor.isShutdown());
                 }
                 pendingTask = newpendingTask;
             }
@@ -119,7 +119,7 @@ public abstract class ADataController {
                 protected void onError(Throwable e) {
                     Slimefun.logger().log(Level.SEVERE, "Exception thrown while executing write task: ");
                     e.printStackTrace();
-                    //whatever, remove
+                    // whatever, remove
                     scheduledWriteTasks.remove(scopeToUse);
                 }
             };

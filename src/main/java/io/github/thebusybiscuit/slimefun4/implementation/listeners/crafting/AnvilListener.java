@@ -39,9 +39,12 @@ public class AnvilListener implements SlimefunCraftingListener {
             }
         }
     }
+
     @EventHandler(ignoreCancelled = true)
-    public void onAnvilCraft(PrepareAnvilEvent e){
-        if(e.getInventory().getType() == InventoryType.ANVIL&&e.getInventory().getSize()>=2){
+    public void onAnvilCraft(PrepareAnvilEvent e) {
+        // fix issue #958
+        if (e.getInventory().getType() == InventoryType.ANVIL
+                && e.getInventory().getSize() >= 2) {
             ItemStack item1 = e.getInventory().getContents()[0];
             ItemStack item2 = e.getInventory().getContents()[1];
             if (hasUnallowedItems(item1, item2)) {

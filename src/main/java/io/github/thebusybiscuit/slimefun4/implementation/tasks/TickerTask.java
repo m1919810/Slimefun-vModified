@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import lombok.Setter;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import org.apache.commons.lang.Validate;
@@ -51,6 +50,7 @@ public class TickerTask implements Runnable {
 
     @Setter
     protected int tickRate;
+
     protected boolean halted = false;
     protected boolean running = false;
     protected AtomicInteger tickCount = new AtomicInteger(0);
@@ -71,7 +71,7 @@ public class TickerTask implements Runnable {
 
     public void restart(@Nonnull Slimefun plugin) {
         this.halted = true;
-        if(tickTask != null) {
+        if (tickTask != null) {
             tickTask.cancel();
         }
         this.halted = false;
@@ -79,14 +79,14 @@ public class TickerTask implements Runnable {
         tickTask = scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
     }
 
-    protected static final int recoveryPeriod=600;
+    protected static final int recoveryPeriod = 600;
     /**
      * This method resets this {@link TickerTask} to run again.
      */
     protected void reset() {
         running = false;
-        int cnt= tickCount.incrementAndGet();
-        if(!this.bugs.isEmpty()&& cnt% (recoveryPeriod)==0) {
+        int cnt = tickCount.incrementAndGet();
+        if (!this.bugs.isEmpty() && cnt % (recoveryPeriod) == 0) {
             this.bugs.clear();
         }
     }
@@ -210,17 +210,17 @@ public class TickerTask implements Runnable {
     protected void reportErrors(Location l, SlimefunItem item, Throwable x) {
 
         BlockPosition position = new BlockPosition(l);
-        Integer disable= bugs.compute(position,(pos,i)->{
-            if(i==null){
+        Integer disable = bugs.compute(position, (pos, i) -> {
+            if (i == null) {
                 new ErrorReport<>(x, l, item);
                 return 1;
-            }else if(i>=4){
+            } else if (i >= 4) {
                 return null;
-            }else{
-                return i+1;
+            } else {
+                return i + 1;
             }
         });
-        if(disable==null){
+        if (disable == null) {
             disableTicker(l);
             Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                 l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()

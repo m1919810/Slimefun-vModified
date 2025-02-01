@@ -131,7 +131,7 @@ class PlaceholderAPIIntegration extends PlaceholderExpansion {
             return Slimefun.getProfiler().getTime();
         }
 
-        if (isPlaceholder(p, false,params, "timings_run_time")){
+        if (isPlaceholder(p, false, params, "timings_run_time")) {
             return Slimefun.getProfiler().getRunTime();
         }
 

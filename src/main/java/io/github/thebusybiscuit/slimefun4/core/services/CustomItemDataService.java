@@ -97,7 +97,7 @@ public class CustomItemDataService implements Keyed {
      * @return An {@link Optional} describing the result
      */
     public @Nonnull Optional<String> getItemData(@Nullable ItemStack item) {
-        if (item == null || item.getType() == Material.AIR ) {
+        if (item == null || item.getType() == Material.AIR) {
             return Optional.empty();
         }
         ItemMeta meta = item.getItemMeta();

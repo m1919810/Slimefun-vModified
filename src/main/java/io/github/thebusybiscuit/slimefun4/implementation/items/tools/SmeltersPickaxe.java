@@ -9,7 +9,6 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.ToolUseHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,9 +47,9 @@ public class SmeltersPickaxe extends SimpleSlimefunItem<ToolUseHandler> implemen
                         itemDrops.add(drop);
                     }
                 }
-                //stop blockListener from dropping origin drops
+                // stop blockListener from dropping origin drops
                 e.setDropItems(false);
-                //drop smelted manually
+                // drop smelted manually
                 for (ItemStack itemDrop : itemDrops) {
                     b.getWorld().dropItemNaturally(b.getLocation(), itemDrop);
                 }

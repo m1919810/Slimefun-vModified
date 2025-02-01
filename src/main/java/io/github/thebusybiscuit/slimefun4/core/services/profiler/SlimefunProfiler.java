@@ -72,6 +72,7 @@ public class SlimefunProfiler {
      * This boolean marks whether we are currently profiling or not.
      */
     private volatile boolean isProfiling = false;
+
     private volatile long startTime;
     private long totalNsRunTime;
     /**
@@ -106,7 +107,7 @@ public class SlimefunProfiler {
         isProfiling = true;
         queued.set(0);
         timings.clear();
-        startTime=System.nanoTime();
+        startTime = System.nanoTime();
     }
 
     /**
@@ -189,7 +190,7 @@ public class SlimefunProfiler {
     private void finishReport() {
         // We will only wait for a maximum of this many 1ms sleeps
         int iterations = 4000;
-        long totalRuntime=totalNsRunTime;
+        long totalRuntime = totalNsRunTime;
         // Wait for all timing results to come in
         while (!isProfiling && queued.get() > 0) {
             try {
@@ -238,7 +239,8 @@ public class SlimefunProfiler {
         ticksPassed.incrementAndGet();
 
         if (!requests.isEmpty()) {
-            PerformanceSummary summary = new PerformanceSummary(this, totalElapsedTime, timings.size()).setTotalRunTime(totalRuntime);
+            PerformanceSummary summary =
+                    new PerformanceSummary(this, totalElapsedTime, timings.size()).setTotalRunTime(totalRuntime);
             Iterator<PerformanceInspector> iterator = requests.iterator();
 
             while (iterator.hasNext()) {
@@ -343,9 +345,9 @@ public class SlimefunProfiler {
     }
 
     protected float getPercentageOfTick() {
-        //float millis = totalElapsedTime / 1000000.0F;
-        //use real run time instead of totalElapsedTime
-        float millis =( this.totalNsRunTime) / 1000000.0F;
+        // float millis = totalElapsedTime / 1000000.0F;
+        // use real run time instead of totalElapsedTime
+        float millis = (this.totalNsRunTime) / 1000000.0F;
         float fraction = (millis * 100.0F) / MAX_TICK_DURATION;
 
         return Math.round((fraction * 100.0F) / 100.0F);
@@ -374,7 +376,7 @@ public class SlimefunProfiler {
         return NumberUtils.getAsMillis(totalElapsedTime);
     }
 
-    public String getRunTime(){
+    public String getRunTime() {
         return NumberUtils.getAsMillis(totalNsRunTime);
     }
 

@@ -123,7 +123,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
 import net.guizhanss.slimefun4.updater.AutoUpdateTask;
 import org.apache.commons.lang.Validate;
@@ -176,7 +175,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final SlimefunDatabaseManager databaseManager = new SlimefunDatabaseManager(this);
     private final SlimefunRegistry registry = new SlimefunRegistry();
     private final SlimefunCommand command = new SlimefunCommand(this);
-    private TickerTask ticker ;// new TickerTask();
+    private TickerTask ticker; // new TickerTask();
     private PlayerChatCatcher chatCatcher;
 
     // Services - Systems that fulfill certain tasks, treat them as a black box
@@ -427,7 +426,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Starting our tasks
         autoSavingService.start(this, config.getInt("options.auto-save-delay-in-minutes"));
         hologramsService.start();
-        ticker=new AsyncTickerTask();
+        ticker = new AsyncTickerTask();
         ticker.start(this);
 
         logger.log(Level.INFO, "正在加载第三方插件支持...");

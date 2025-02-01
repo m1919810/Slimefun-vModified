@@ -1,6 +1,7 @@
 package me.mrCookieSlime.CSCoreLibPlugin.general.Inventory;
 
 import city.norain.slimefun4.holder.SlimefunInventoryHolder;
+import city.norain.slimefun4.utils.InventoryUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,7 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -27,7 +30,10 @@ public class ChestMenu extends SlimefunInventoryHolder {
 
     private boolean clickable;
     private boolean emptyClickable;
+
+    @Getter
     private String title;
+
     private List<ItemStack> items;
     /**
      * Size of chestmenu
@@ -39,7 +45,9 @@ public class ChestMenu extends SlimefunInventoryHolder {
     private MenuOpeningHandler open;
     private MenuCloseHandler close;
     private MenuClickHandler playerclick;
+
     private final Set<UUID> viewers = new CopyOnWriteArraySet<>();
+    private final AtomicBoolean lock = new AtomicBoolean(false);
 
     /**
      * Creates a new ChestMenu with the specified
@@ -381,6 +389,19 @@ public class ChestMenu extends SlimefunInventoryHolder {
 
     public boolean isSizeAutomaticallyInferred() {
         return size == -1;
+    }
+
+    public boolean locked() {
+        return lock.get();
+    }
+
+    public void lock() {
+        lock.getAndSet(true);
+        InventoryUtil.closeInventory(this.inventory);
+    }
+
+    public void unlock() {
+        lock.getAndSet(false);
     }
 
     @FunctionalInterface
