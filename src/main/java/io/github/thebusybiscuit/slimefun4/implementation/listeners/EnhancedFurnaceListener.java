@@ -77,17 +77,19 @@ public class EnhancedFurnaceListener implements Listener {
 
                 boolean multiplier = SlimefunTag.ENHANCED_FURNACE_LUCK_MATERIALS.isTagged(
                         inventory.getSmelting().getType());
-                int amount = multiplier ? enhancedFurnace.getRandomOutputAmount() : 1;
-                Optional<ItemStack> result =
+                if(multiplier){
+                    int amount = enhancedFurnace.getRandomOutputAmount();
+                    Optional<ItemStack> result =
                         Slimefun.getMinecraftRecipeService().getFurnaceOutput(inventory.getSmelting());
 
-                if (result.isPresent()) {
-                    ItemStack item = result.get();
-                    int previous = inventory.getResult() != null
+                    if (result.isPresent()) {
+                        ItemStack item = result.get();
+                        int previous = inventory.getResult() != null
                             ? inventory.getResult().getAmount()
                             : 0;
-                    amount = Math.min(item.getMaxStackSize() - previous, amount);
-                    e.setResult(new ItemStack(item.getType(), amount));
+                        amount = Math.min(item.getMaxStackSize() - previous, amount);
+                        e.setResult(new ItemStack(item.getType(), amount));
+                    }
                 }
             }
         }

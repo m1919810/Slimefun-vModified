@@ -17,6 +17,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import lombok.Getter;
@@ -29,7 +30,9 @@ public class AsyncTickerTask extends TickerTask {
     @Setter
     @Getter
     private boolean useAsync = Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers", true);
-
+    @Getter
+    @Setter
+    private boolean debugMode = false;
     @Setter
     private int threadCount = (Math.min(32767, Runtime.getRuntime().availableProcessors()) / 2) + 4;
 
@@ -92,9 +95,14 @@ public class AsyncTickerTask extends TickerTask {
     }
 
     private static final Map<ChunkPosition, AtomicInteger> chunkWeakLock = new ConcurrentHashMap<>();
-
+    private void debug(Supplier<String> debug){
+        if(debugMode){
+            Slimefun.logger().log(Level.INFO, debug.get());
+        }
+    }
     @Override
     public void run() {
+        long start = System.nanoTime();
         if (!useAsync) {
             super.run();
             return;
@@ -105,6 +113,7 @@ public class AsyncTickerTask extends TickerTask {
         try {
             // If this method is actually still running... DON'T
             if (running) {
+                debug(()->"Still Running");
                 return;
             }
             running = true;
@@ -143,16 +152,17 @@ public class AsyncTickerTask extends TickerTask {
                         .orTimeout(10, TimeUnit.SECONDS)
                         .exceptionally(ex -> {
                             // 超时或者其他异常的处理逻辑
-                            Slimefun.logger().log(Level.SEVERE, ex, () -> {
-                                return "Timeout or error occurred in AsyncTickTask: ";
-                            });
-                            Slimefun.logger().log(Level.WARNING, () -> {
-                                return "Resetting Thread Pool... ";
-                            });
-                            if (!this.halted && !this.paused) {
-                                resetTheadPool();
+                            if(!halted){
+                                Slimefun.logger().log(Level.SEVERE, ex, () -> {
+                                    return "Timeout or error occurred in AsyncTickTask: ";
+                                });
+                                Slimefun.logger().log(Level.WARNING, () -> {
+                                    return "Resetting Thread Pool... ";
+                                });
+                                if (!this.paused) {
+                                    resetTheadPool();
+                                }
                             }
-
                             return null;
                         })
                         .join();
@@ -165,6 +175,8 @@ public class AsyncTickerTask extends TickerTask {
             for (BlockTicker ticker : syncTickers) {
                 ticker.startNewTick();
             }
+            long stopProfiler = System.nanoTime();
+            debug(()->"stopping profiler after "+((stopProfiler-start)/1_000_000)+" ms");
             Slimefun.getProfiler().stop();
         } catch (Exception | LinkageError x) {
             Slimefun.logger()
@@ -177,6 +189,8 @@ public class AsyncTickerTask extends TickerTask {
         } finally {
             reset();
         }
+        long end = System.nanoTime();
+        debug(()->"totalCost "+((end-start)/1_000_000)+" ms");
     }
     // todo we can reSchedule chunk execute order
     // todo for example : each chunk launch first machine task, then another,then another
@@ -244,11 +258,8 @@ public class AsyncTickerTask extends TickerTask {
                      * are always ran with a 50ms delay (1 game tick)
                      */
                     Slimefun.runSync(() -> {
-                        if (blockData.isPendingRemove()) {
-                            return;
-                        }
                         Block b = l.getBlock();
-                        tickBlock(l, b, item, blockData, System.nanoTime());
+                        tickSyncBlock(l, b, item, blockData);
                     });
                 } else {
                     tickers.compute(ticker, (bt, future) -> {
@@ -263,7 +274,7 @@ public class AsyncTickerTask extends TickerTask {
                             } catch (Throwable x) {
                                 reportErrors(l, item, x);
                             } finally {
-                                // end chunk weak lock when async task end
+                                // end chunk weak lock when async task end,even if data pending move, this code will run
                                 chunkCounter.set(0);
                                 Slimefun.getProfiler().closeEntry(l, item, timestamp);
                             }

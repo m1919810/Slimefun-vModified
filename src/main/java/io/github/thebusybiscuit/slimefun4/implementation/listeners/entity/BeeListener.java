@@ -41,7 +41,8 @@ public class BeeListener implements Listener {
 
             if (profile.hasFullProtectionAgainst(ProtectionType.BEES)) {
                 for (ItemStack armor : p.getInventory().getArmorContents()) {
-                    if (armor != null) {
+                    //check if it is an armor item
+                    if (armor != null && armor.getType().getMaxDurability() > 0) {
                         ItemUtils.damageItem(armor, 1, false);
                     }
                 }

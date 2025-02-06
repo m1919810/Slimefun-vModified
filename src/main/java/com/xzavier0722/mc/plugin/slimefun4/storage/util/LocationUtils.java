@@ -30,7 +30,8 @@ public class LocationUtils {
     }
 
     public static String getChunkKey(Location loc) {
-        return loc.getWorld().getName() + ";" + (loc.getBlockX() >> 4) + ":" + (loc.getBlockZ() >> 4);
+        return new StringBuilder().append(loc.getWorld().getName()).append(';').append(String.valueOf(loc.getBlockX()>>4)).append(':').append(String.valueOf(loc.getBlockZ()>>4)).toString();
+       // return loc.getWorld().getName() + ";" + (loc.getBlockX() >> 4) + ":" + (loc.getBlockZ() >> 4);
     }
 
     public static Location toLocation(String lKey) {

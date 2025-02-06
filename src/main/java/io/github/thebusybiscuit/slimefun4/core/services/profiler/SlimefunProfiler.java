@@ -192,6 +192,7 @@ public class SlimefunProfiler {
         int iterations = 4000;
         long totalRuntime = totalNsRunTime;
         // Wait for all timing results to come in
+        //todo spliting sync Task
         while (!isProfiling && queued.get() > 0) {
             try {
                 /*
@@ -219,7 +220,6 @@ public class SlimefunProfiler {
                 Thread.currentThread().interrupt();
             }
         }
-
         if (isProfiling && queued.get() > 0) {
             // Looks like the next profiling has already started, abort!
             return;

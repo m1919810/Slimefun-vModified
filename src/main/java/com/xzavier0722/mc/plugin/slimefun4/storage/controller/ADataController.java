@@ -57,6 +57,7 @@ public abstract class ADataController {
         readExecutor.shutdownNow();
         callbackExecutor.shutdownNow();
         try {
+            int stuckTaskCount = 0;
             float totalTask = scheduledWriteTasks.size();
             var pendingTask = scheduledWriteTasks.size();
             while (pendingTask > 0) {
@@ -65,11 +66,16 @@ public abstract class ADataController {
                 TimeUnit.SECONDS.sleep(1);
                 var newpendingTask = scheduledWriteTasks.size();
                 if (newpendingTask == pendingTask) {
+                    stuckTaskCount++;
                     var checkTask = Set.copyOf(scheduledWriteTasks.keySet());
                     for (var task : checkTask) {
-                        logger.log(Level.INFO, "查看可能卡顿的数据库任务: " + task.toString());
+                        logger.log(Level.INFO, "查看可能锁死的数据库任务,若确认卡顿则会强制关闭(%d/50): ".formatted(stuckTaskCount) + task.toString());
                     }
                     logger.log(Level.INFO, "writer Executor: " + writeExecutor.isShutdown());
+                    if(stuckTaskCount > 50){
+                        logger.log(Level.INFO,"已确认任务被锁死,忽略任务自动关闭中...");
+                        break;
+                    }
                 }
                 pendingTask = newpendingTask;
             }
@@ -120,7 +126,6 @@ public abstract class ADataController {
                     Slimefun.logger().log(Level.SEVERE, "Exception thrown while executing write task: ");
                     e.printStackTrace();
                     // whatever, remove
-                    scheduledWriteTasks.remove(scopeToUse);
                 }
             };
             queuedTask.queue(key, task);

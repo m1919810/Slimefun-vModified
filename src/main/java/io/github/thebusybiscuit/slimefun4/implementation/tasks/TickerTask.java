@@ -129,11 +129,11 @@ public class TickerTask implements Runnable {
             Slimefun.getProfiler().stop();
         } catch (Exception | LinkageError x) {
             Slimefun.logger()
-                    .log(
-                            Level.SEVERE,
-                            x,
-                            () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
-                                    + Slimefun.getVersion());
+                .log(
+                    Level.SEVERE,
+                    x,
+                    () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
+                        + Slimefun.getVersion());
             reset();
         }
     }
@@ -175,17 +175,14 @@ public class TickerTask implements Runnable {
                      * are always ran with a 50ms delay (1 game tick)
                      */
                     Slimefun.runSync(() -> {
-                        if (blockData.isPendingRemove()) {
-                            return;
-                        }
                         Block b = l.getBlock();
-                        tickBlock(l, b, item, blockData, System.nanoTime());
+                        tickSyncBlock(l, b, item, blockData);
                     });
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     item.getBlockTicker().update();
                     Block b = l.getBlock();
-                    tickBlock(l, b, item, blockData, timestamp);
+                    tickAsyncBlock(l, b, item, blockData, timestamp);
                 }
 
                 tickers.add(item.getBlockTicker());
@@ -196,12 +193,27 @@ public class TickerTask implements Runnable {
     }
 
     @ParametersAreNonnullByDefault
-    protected void tickBlock(Location l, Block b, SlimefunItem item, SlimefunBlockData data, long timestamp) {
+    protected void tickAsyncBlock(Location l, Block b, SlimefunItem item, SlimefunBlockData data,long timestamp) {
+
         try {
             item.getBlockTicker().tick(b, item, data);
         } catch (Exception | LinkageError x) {
             reportErrors(l, item, x);
         } finally {
+            Slimefun.getProfiler().closeEntry(l, item, timestamp);
+        }
+    }
+    protected void tickSyncBlock(Location l, Block b, SlimefunItem item, SlimefunBlockData data) {
+        long timestamp = System.nanoTime();
+        try {
+            if (data.isPendingRemove()) {
+                return;
+            }
+            item.getBlockTicker().tick(b, item, data);
+        } catch (Exception | LinkageError x) {
+            reportErrors(l, item, x);
+        } finally {
+            //always run
             Slimefun.getProfiler().closeEntry(l, item, timestamp);
         }
     }

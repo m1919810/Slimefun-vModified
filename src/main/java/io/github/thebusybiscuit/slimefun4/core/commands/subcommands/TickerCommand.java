@@ -47,6 +47,11 @@ public class TickerCommand extends SubCommand {
                         ticker3.resetTheadPool();
                         sender.sendMessage("restart thread pool with poolType " + args[2]);
                         break;
+                    case "debug":
+                        var ticker4 = (AsyncTickerTask) Slimefun.getTickerTask();
+                        ticker4.setDebugMode(!ticker4.isDebugMode());
+                        sender.sendMessage("toggle debug mode " + ticker4.isDebugMode());
+                        break;
                     default:
                         sender.sendMessage("Unknown command");
                 }

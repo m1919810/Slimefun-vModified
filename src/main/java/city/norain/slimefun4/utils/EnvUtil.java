@@ -16,7 +16,7 @@ public class EnvUtil {
             prop.load(resource);
 
             gitInfo = prop;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             Slimefun.logger().log(Level.WARNING, "无法加载构建信息", e);
         }
     }
