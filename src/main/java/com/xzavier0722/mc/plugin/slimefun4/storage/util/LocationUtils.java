@@ -59,7 +59,7 @@ public class LocationUtils {
 
     public static boolean isSameLoc(Location l1, Location l2) {
         return l1 == l2
-                || (isSameChunk(l1.getChunk(), l2.getChunk())
+                || (l1.getWorld()==l2.getWorld()
                         && l1.getBlockX() == l2.getBlockX()
                         && l1.getBlockY() == l2.getBlockY()
                         && l1.getBlockZ() == l2.getBlockZ());

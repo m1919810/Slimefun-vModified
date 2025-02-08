@@ -29,7 +29,7 @@ public abstract class ADataController {
     private ExecutorService readExecutor;
     private ExecutorService writeExecutor;
     private ExecutorService callbackExecutor;
-    private volatile boolean destroyed = false;
+    protected volatile boolean destroyed = false;
     protected final Logger logger;
 
     protected ADataController(DataType dataType) {

@@ -147,7 +147,7 @@ public class BlockDataController extends ADataController {
     @Nonnull
     public SlimefunBlockData createBlock(Location l, String sfId) {
         checkDestroy();
-        var re = getChunkDataCache(l.getChunk(), true).createBlockData(l, sfId);
+        var re = getChunkDataCache(l, true).createBlockData(l, sfId);
         if (Slimefun.getRegistry().getTickerBlocks().contains(sfId)) {
             Slimefun.getTickerTask().enableTicker(l);
         }
@@ -162,7 +162,7 @@ public class BlockDataController extends ADataController {
 
         var data = new RecordSet();
         data.put(FieldKey.LOCATION, lKey);
-        data.put(FieldKey.CHUNK, LocationUtils.getChunkKey(l.getChunk()));
+        data.put(FieldKey.CHUNK, LocationUtils.getChunkKey(l));
         data.put(FieldKey.SLIMEFUN_ID, sfId);
 
         var scopeKey = new LocationKey(DataScope.NONE, l);
@@ -178,7 +178,7 @@ public class BlockDataController extends ADataController {
     public void removeBlock(Location l) {
         checkDestroy();
 
-        var removed = getChunkDataCache(l.getChunk(), true).removeBlockData(l);
+        var removed = getChunkDataCache(l, true).removeBlockData(l);
         if (removed == null) {
             return;
         }
@@ -706,16 +706,22 @@ public class BlockDataController extends ADataController {
     }
 
     private void scheduleDelayedUpdateTask(LinkedKey key, Runnable run) {
-        synchronized (delayedWriteTasks) {
-            var task = delayedWriteTasks.get(key);
-            if (task != null && !task.isExecuted()) {
-                task.setRunAfter(delayedSecond, TimeUnit.SECONDS);
-                return;
-            }
+        if(!this.destroyed&& Bukkit.isPrimaryThread()){
+            //do not block in primary thread
+            Bukkit.getScheduler().runTaskAsynchronously(Slimefun.instance(),()->scheduleDelayedUpdateTask(key,run));
+        }else{
+            synchronized (delayedWriteTasks) {
+                var task = delayedWriteTasks.get(key);
+                if (task != null && !task.isExecuted()) {
+                    task.setRunAfter(delayedSecond, TimeUnit.SECONDS);
+                    return;
+                }
 
-            task = new DelayedTask(delayedSecond, TimeUnit.SECONDS, run);
-            delayedWriteTasks.put(key, task);
+                task = new DelayedTask(delayedSecond, TimeUnit.SECONDS, run);
+                delayedWriteTasks.put(key, task);
+            }
         }
+
     }
 
     private void scheduleChunkDataUpdate(ScopeKey scopeKey, RecordKey reqKey, String cKey, String key, String val) {

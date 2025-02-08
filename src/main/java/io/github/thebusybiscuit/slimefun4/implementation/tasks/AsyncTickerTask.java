@@ -29,7 +29,7 @@ import org.bukkit.block.Block;
 public class AsyncTickerTask extends TickerTask {
     @Setter
     @Getter
-    private boolean useAsync = Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers", true);
+    private boolean useAsync = Slimefun.getCfg().getOrSetDefault("URID.enable-async-tickers", false);
     @Getter
     @Setter
     private boolean debugMode = false;
