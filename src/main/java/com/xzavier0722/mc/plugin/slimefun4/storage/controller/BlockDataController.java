@@ -706,10 +706,10 @@ public class BlockDataController extends ADataController {
     }
 
     private void scheduleDelayedUpdateTask(LinkedKey key, Runnable run) {
-        if(!this.destroyed&& Bukkit.isPrimaryThread()){
-            //do not block in primary thread
-            Bukkit.getScheduler().runTaskAsynchronously(Slimefun.instance(),()->scheduleDelayedUpdateTask(key,run));
-        }else{
+//        if(!this.destroyed&& Bukkit.isPrimaryThread()){
+//            //do not block in primary thread
+//            Bukkit.getScheduler().runTaskAsynchronously(Slimefun.instance(),()->scheduleDelayedUpdateTask(key,run));
+//        }else{
             synchronized (delayedWriteTasks) {
                 var task = delayedWriteTasks.get(key);
                 if (task != null && !task.isExecuted()) {
@@ -720,7 +720,7 @@ public class BlockDataController extends ADataController {
                 task = new DelayedTask(delayedSecond, TimeUnit.SECONDS, run);
                 delayedWriteTasks.put(key, task);
             }
-        }
+//        }
 
     }
 

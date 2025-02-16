@@ -34,7 +34,7 @@ public class AsyncTickerTask extends TickerTask {
     @Setter
     private boolean debugMode = false;
     @Setter
-    private int threadCount = (Math.min(32767, Runtime.getRuntime().availableProcessors()) / 2) + 4;
+    private int threadCount = (Math.min(32767, Runtime.getRuntime().availableProcessors()) / 2) ;
 
     @Setter
     private String poolType = "ForkJoinPool"; // "ThreadPoolExecutor";
@@ -47,6 +47,10 @@ public class AsyncTickerTask extends TickerTask {
         Slimefun.logger().log(Level.INFO, "Setting up tick task");
         if (useAsync) {
             Slimefun.logger().log(Level.INFO, "Async Ticker enabled");
+            for (int i = 0 ; i < 10 ;++i){
+                Slimefun.logger().log(Level.INFO, "多线程优化已经启动,请确保你知道你在做什么!");
+                Slimefun.logger().log(Level.INFO, "你可以在config.yml 的URID.enable-async-tickers 设置是否启用!");
+            }
             resetTheadPool();
         } else {
             Slimefun.logger().log(Level.INFO, "Async Ticker disabled");
@@ -159,6 +163,7 @@ public class AsyncTickerTask extends TickerTask {
                                 Slimefun.logger().log(Level.WARNING, () -> {
                                     return "Resetting Thread Pool... ";
                                 });
+                                this.bugs.clear();
                                 if (!this.paused) {
                                     resetTheadPool();
                                 }

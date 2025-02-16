@@ -313,6 +313,10 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         if (NumberUtils.getJavaVersion() < RECOMMENDED_JAVA_VERSION) {
             StartupWarnings.oldJavaVersion(logger, RECOMMENDED_JAVA_VERSION);
         }
+        for (int i=0;i < 10 ;++i){
+            logger.warning("你正在使用Slimefun vLingChe 改版,请确保你已经了解!!!");
+            logger.warning("汉化版主线下载地址: https://builds.guizhanss.com/SlimefunGuguProject/Slimefun4/master/builds");
+        }
 
         // If the server has no "data-storage" folder, it's _probably_ a new install. So mark it for
         // metrics.
