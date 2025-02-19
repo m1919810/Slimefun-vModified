@@ -142,6 +142,22 @@
                 <version>3.5.1</version>
 
                 <configuration>
+                    <!-- Exclude unneeded metadata files from shaded dependencies -->
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*</exclude>
+                            </excludes>
+                        </filter>
+                        <filter>
+                            <artifact>com.github.m1919810:matlib:**</artifact>
+                            <includes>
+                                <include>me/matl114/matlib/Algorithms/**</include>
+                                <include>me/matl114/matlibAdaptor/**</include>
+                            </includes>
+                        </filter>
+                    </filters>
                     <!-- Relocate these to avoid clashes and conflicts -->
                     <relocations>
                         <relocation>
@@ -164,17 +180,13 @@
                             <pattern>net.guizhanss.guizhanlib</pattern>
                             <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.guizhanlib</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>me.matl114.matlib</pattern>
+                            <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.matlib</shadedPattern>
+                        </relocation>
                     </relocations>
 
-                    <!-- Exclude unneeded metadata files from shaded dependencies -->
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
+
                 </configuration>
 
                 <executions>
@@ -487,6 +499,12 @@
             <groupId>net.guizhanss</groupId>
             <artifactId>guizhanlib-updater</artifactId>
             <version>2.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.m1919810</groupId>
+            <artifactId>matlib</artifactId>
+            <version>2e13e8d</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

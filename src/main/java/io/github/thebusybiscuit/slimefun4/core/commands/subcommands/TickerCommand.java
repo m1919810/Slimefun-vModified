@@ -52,8 +52,13 @@ public class TickerCommand extends SubCommand {
                         ticker4.setDebugMode(!ticker4.isDebugMode());
                         sender.sendMessage("toggle debug mode " + ticker4.isDebugMode());
                         break;
+                    case "level":
+                        int level = Integer.parseInt(args[2]);
+                        var ticker5 = (AsyncTickerTask) Slimefun.getTickerTask();
+                        ticker5.setParallelismLevel(level);
                     default:
                         sender.sendMessage("Unknown command");
+
                 }
             }
         } else {

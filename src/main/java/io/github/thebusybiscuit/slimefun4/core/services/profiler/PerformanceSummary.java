@@ -66,8 +66,10 @@ class PerformanceSummary {
             sender.sendMessage(
                     ChatColor.GOLD + (((AsyncTickerTask) Slimefun.getTickerTask()).isUseAsync() ? "Async" : "Common")
                             + " Ticker Total time: " + ChatColor.YELLOW + NumberUtils.getAsMillis(totalRunTime));
-            if (((AsyncTickerTask) Slimefun.getTickerTask()).isUseAsync()) {
+            AsyncTickerTask task = ((AsyncTickerTask) Slimefun.getTickerTask());
+            if (task.isUseAsync()) {
                 sender.sendMessage(ChatColor.GOLD + "多线程Ticker已启用,下方机器统计数据仅做参考!");
+                sender.sendMessage(ChatColor.GOLD + "当前多线程Ticker信息: 并行级别: "+task.getParallelismLevel()+", 并行度: "+task.getThreadCount());
             }
         } else {
             sender.sendMessage(ChatColor.GOLD + " Ticker Total time statistics Not enabled ");
