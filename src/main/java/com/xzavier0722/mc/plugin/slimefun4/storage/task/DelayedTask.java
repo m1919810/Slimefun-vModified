@@ -1,11 +1,15 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.task;
 
+import lombok.Getter;
+
 import java.util.concurrent.TimeUnit;
 
 public class DelayedTask {
     private final Runnable task;
     private long runAfter = 0;
-    private boolean executed = false;
+
+    @Getter
+    private volatile boolean executed = false;
 
     public DelayedTask(long delay, TimeUnit unit, Runnable task) {
         this.task = task;
@@ -24,10 +28,6 @@ public class DelayedTask {
         executed = true;
         task.run();
         return true;
-    }
-
-    public synchronized boolean isExecuted() {
-        return executed;
     }
 
     public void runUnsafely() {

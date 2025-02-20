@@ -30,6 +30,7 @@ public abstract class ADataController {
     private ExecutorService writeExecutor;
     private ExecutorService callbackExecutor;
     protected volatile boolean destroyed = false;
+    protected volatile boolean isShutingDown = false;
     protected final Logger logger;
 
     protected ADataController(DataType dataType) {
@@ -50,6 +51,7 @@ public abstract class ADataController {
 
     @OverridingMethodsMustInvokeSuper
     public void shutdown() {
+        isShutingDown = true;
         if (destroyed) {
             return;
         }

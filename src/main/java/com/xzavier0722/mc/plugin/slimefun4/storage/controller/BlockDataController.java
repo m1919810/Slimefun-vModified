@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -50,10 +52,10 @@ public class BlockDataController extends ADataController {
     private BukkitTask looperTask;
     private ChunkDataLoadMode chunkDataLoadMode;
     private boolean initLoading = false;
-
+    private ExecutorService mainThreadDelayedUpdateTaskLauncher;
     BlockDataController() {
         super(DataType.BLOCK_STORAGE);
-        delayedWriteTasks = new HashMap<>();
+        delayedWriteTasks = new HashMap<>(32768);
         loadedChunk = new ConcurrentHashMap<>();
         invSnapshots = new ConcurrentHashMap<>();
         lock = new ScopedLock();
@@ -110,6 +112,7 @@ public class BlockDataController extends ADataController {
         }
         enableDelayedSaving = true;
         this.delayedSecond = delayedSecond;
+        this.mainThreadDelayedUpdateTaskLauncher = Executors.newSingleThreadExecutor();
         looperTask = Bukkit.getScheduler()
                 .runTaskTimerAsynchronously(
                         p,
@@ -647,9 +650,11 @@ public class BlockDataController extends ADataController {
 
     @Override
     public void shutdown() {
+        isShutingDown = true;
         saveAllBlockInventories();
         if (enableDelayedSaving) {
             looperTask.cancel();
+            this.mainThreadDelayedUpdateTaskLauncher.shutdown();
             executeAllDelayedTasks();
         }
         super.shutdown();
@@ -706,10 +711,7 @@ public class BlockDataController extends ADataController {
     }
 
     private void scheduleDelayedUpdateTask(LinkedKey key, Runnable run) {
-//        if(!this.destroyed&& Bukkit.isPrimaryThread()){
-//            //do not block in primary thread
-//            Bukkit.getScheduler().runTaskAsynchronously(Slimefun.instance(),()->scheduleDelayedUpdateTask(key,run));
-//        }else{
+        Runnable scheduleTask = ()->{
             synchronized (delayedWriteTasks) {
                 var task = delayedWriteTasks.get(key);
                 if (task != null && !task.isExecuted()) {
@@ -720,8 +722,12 @@ public class BlockDataController extends ADataController {
                 task = new DelayedTask(delayedSecond, TimeUnit.SECONDS, run);
                 delayedWriteTasks.put(key, task);
             }
-//        }
-
+        };
+        if(!this.isShutingDown && Bukkit.isPrimaryThread()) {
+            this.mainThreadDelayedUpdateTaskLauncher.execute(scheduleTask);
+        }else {
+            scheduleTask.run();
+        }
     }
 
     private void scheduleChunkDataUpdate(ScopeKey scopeKey, RecordKey reqKey, String cKey, String key, String val) {
