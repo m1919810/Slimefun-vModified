@@ -28,18 +28,19 @@ public class DelayedSavingLooperTask implements Runnable {
             return;
         }
 
-        //fixme :before we figure out what the fuck is happening ,nothing will be changed
-        if (lastForceSave + (forceSavePeriod * 1000L) < System.currentTimeMillis()) {
+        //fixme :before we figure out what the fuck is happening
+        if (lastForceSave + (forceSavePeriod * 1000L) > System.currentTimeMillis()) {
             tasks.forEach((key, task) -> {
-                if (task.tryRun()) {
+                if (task.tryStartRun()) {
                     executeCallback.accept(key);
+                    task.runUnsafely();
                 }
             });
         } else {
             lastForceSave = System.currentTimeMillis();
             tasks.forEach((key, task) -> {
-                task.runUnsafely();
                 executeCallback.accept(key);
+                task.runUnsafely();
             });
         }
     }

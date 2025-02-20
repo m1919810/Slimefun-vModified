@@ -8,8 +8,7 @@ public class DelayedTask {
     private final Runnable task;
     private long runAfter = 0;
 
-    @Getter
-    private volatile boolean executed = false;
+    private boolean executed = false;
 
     public DelayedTask(long delay, TimeUnit unit, Runnable task) {
         this.task = task;
@@ -28,6 +27,17 @@ public class DelayedTask {
         executed = true;
         task.run();
         return true;
+    }
+    public synchronized boolean tryStartRun(){
+        if (System.currentTimeMillis() < runAfter) {
+            return false;
+        }
+
+        executed = true;
+        return true;
+    }
+    public synchronized boolean isExecuted() {
+        return executed;
     }
 
     public void runUnsafely() {
