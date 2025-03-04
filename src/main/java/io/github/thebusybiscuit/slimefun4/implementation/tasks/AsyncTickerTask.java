@@ -68,9 +68,6 @@ public class AsyncTickerTask extends TickerTask {
         resetTheadPool();
     }
     private String poolType = Slimefun.getCfg().getOrSetDefault("URID.async-tickers-settings.pool-type","ForkJoinPool"); // "ThreadPoolExecutor";
-    // we figured out that ForkJoinPool performs better in my structure
-    // in ThreadPoolExecutor,one task costs more time to complete
-    // I don't know why
     private AbstractExecutorService tickerThreadPool;
 
     public AsyncTickerTask() {
@@ -144,7 +141,7 @@ public class AsyncTickerTask extends TickerTask {
         return tickerThreadPool;
     }
 
-    private static final Map<ChunkPosition, AtomicInteger> chunkWeakLock = new ConcurrentHashMap<>();
+    private static final Map<ChunkPosition, AtomicInteger> chunkLock = new ConcurrentHashMap<>();
     private void debug(Supplier<String> debug){
         if(debugMode){
             Slimefun.logger().log(Level.INFO, debug.get());
@@ -280,11 +277,9 @@ public class AsyncTickerTask extends TickerTask {
                 }
             }
         }
-        //we have already collected all async ticking information
         int loopTimes = 0;
         while(true){
             if(loopTimes > 10){
-                //force run,
                 for(Triplet<SlimefunItem,BlockTicker,SlimefunBlockData> t : asyncTickingInformation){
                     ReentrantLock lock = asyncBlockTickerLock.computeIfAbsent(t.getB(), k -> new ReentrantLock());
                     tryTickBlockWithLock(t.getC().getLocation(), t.getB(),t.getA(),t.getC(),lock);
@@ -318,9 +313,7 @@ public class AsyncTickerTask extends TickerTask {
         } catch (Throwable x) {
             reportErrors(l, item, x);
         } finally {
-            //no deadlock
             lock.unlock();
-            // end chunk weak lock when async task end,even if data pending move, this code will run
             Slimefun.getProfiler().closeEntry(l, item, timestamp);
         }
     }
@@ -348,10 +341,10 @@ public class AsyncTickerTask extends TickerTask {
         }
         running = true;
         Slimefun.getProfiler().start();
-        // each ticker map to a single task chain ,in case of async invoke which led to inner
+        // each ticker map to a single task chain ,in case of
         // ConcurrentModificationException
         HashMap<BlockTicker, CompletableFuture<Void>> tickers = new HashMap<>();
-        // sync tickers are rare
+        // sync tickers
         HashSet<BlockTicker> syncTickers = new HashSet<>();
         // Run our ticker code
         if (!halted) {
@@ -381,7 +374,6 @@ public class AsyncTickerTask extends TickerTask {
             CompletableFuture.allOf(tickers.values().toArray(CompletableFuture[]::new))
                 .orTimeout(10, TimeUnit.SECONDS)
                 .exceptionally(ex -> {
-                    // 超时或者其他异常的处理逻辑
                     if(!halted){
                         Slimefun.logger().log(Level.SEVERE, ex, () -> {
                             return "Timeout or error occurred in AsyncTickTask Lv.2: ";
@@ -411,9 +403,6 @@ public class AsyncTickerTask extends TickerTask {
         Slimefun.getProfiler().stop();
     }
 
-    // todo we can reSchedule chunk execute order
-    // todo for example : each chunk launch first machine task, then another,then another
-    // this may help decrease concurrent errors due to locality,and it also keeps a chunk's task-launching order
     private void tickChunkAsyncParalevel2(
             Map<ChunkPosition, Iterator<Location>> machineSequence,
             HashMap<BlockTicker, CompletableFuture<Void>> tickers,
@@ -424,7 +413,7 @@ public class AsyncTickerTask extends TickerTask {
                 var entry = iter.next();
                 ChunkPosition chunk = entry.getKey();
                 // plan to use more nb lock
-                AtomicInteger chunkCounter = chunkWeakLock.computeIfAbsent(chunk, (c) -> new AtomicInteger(0));
+                AtomicInteger chunkCounter = chunkLock.computeIfAbsent(chunk, (c) -> new AtomicInteger(0));
                 int chunkC = chunkCounter.getAndIncrement();
                 if (chunkC == 0) {
                     var locationIter = entry.getValue();
@@ -435,16 +424,10 @@ public class AsyncTickerTask extends TickerTask {
                         iter.remove();
                     }
                 } else if (chunkC > 20) {
-                    // if chunk counter has been visited for more than 20 time, then let it go,
-                    // this means the machine probably run for a long time, or the amount of chunk left is not so much
-                    // then we risk async operation and let it go
                     chunkCounter.set(0);
                 }
             }
         }
-        // for most time .this map is reusable
-        // chunk amount will not be more than 10000 chunk for most case, so there's no need to clear it
-        // chunkWeakLock.clear();
     }
 
     private void tickLocationAsyncParalevel2(
